@@ -5,14 +5,17 @@
  * contracts. Rule keys are the short names; consumers reference them under
  * the namespace declared in `meta.name` (e.g. `quality-metrics/wmc`).
  *
- * Only the fast-tier rules (`wmc`, `halstead`, `lcom`) are wired in this
- * release. Deep-tier rules (`cbo`, `dit`) ship in a later iteration once the
- * ts-morph project singleton is in place (TASK-020+).
+ * Both tiers are wired:
+ *   - Fast-tier (AST-only): `wmc`, `halstead`, `lcom`.
+ *   - Deep-tier (ts-morph backed): `cbo`, `dit`. These gracefully no-op when
+ *     the ts-morph peer dep is absent — see `src/project-singleton.ts`.
  */
 
 import { wmc } from './rules/wmc.js';
 import { halstead } from './rules/halstead.js';
 import { lcom } from './rules/lcom.js';
+import { cbo } from './rules/cbo.js';
+import { dit } from './rules/dit.js';
 
 export type {
   ReportDescriptor,
@@ -30,6 +33,8 @@ export type {
 export { wmc } from './rules/wmc.js';
 export { halstead } from './rules/halstead.js';
 export { lcom } from './rules/lcom.js';
+export { cbo } from './rules/cbo.js';
+export { dit } from './rules/dit.js';
 
 export const meta = {
   name: 'quality-metrics',
@@ -40,6 +45,8 @@ export const rules = {
   wmc,
   halstead,
   lcom,
+  cbo,
+  dit,
 } as const;
 
 const plugin = {

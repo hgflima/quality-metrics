@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import plugin, { meta, rules, wmc, halstead, lcom } from '../src/index';
+import plugin, { meta, rules, wmc, halstead, lcom, cbo, dit } from '../src/index';
 import type { ReportDescriptor, RuleContext } from '../src/types';
 
 /* ──────────────────────────────────────────────────────────────────────── */
@@ -28,20 +28,23 @@ describe('default export', () => {
 /* Fast-tier rules wiring                                                    */
 /* ──────────────────────────────────────────────────────────────────────── */
 
-describe('fast-tier rule registry', () => {
-  it('registers exactly the three fast-tier rules', () => {
-    expect(Object.keys(rules).sort()).toEqual(['halstead', 'lcom', 'wmc']);
-  });
-
-  it('does NOT yet expose deep-tier rules (cbo, dit) — wired in TASK-024', () => {
-    expect(rules).not.toHaveProperty('cbo');
-    expect(rules).not.toHaveProperty('dit');
+describe('rule registry', () => {
+  it('registers exactly the five rules (fast-tier + deep-tier)', () => {
+    expect(Object.keys(rules).sort()).toEqual([
+      'cbo',
+      'dit',
+      'halstead',
+      'lcom',
+      'wmc',
+    ]);
   });
 
   it('registers the same rule objects exported from the rules modules', () => {
     expect(rules.wmc).toBe(wmc);
     expect(rules.halstead).toBe(halstead);
     expect(rules.lcom).toBe(lcom);
+    expect(rules.cbo).toBe(cbo);
+    expect(rules.dit).toBe(dit);
   });
 });
 
@@ -50,6 +53,8 @@ describe('every registered rule has the OXLint/ESLint shape', () => {
     ['wmc', rules.wmc],
     ['halstead', rules.halstead],
     ['lcom', rules.lcom],
+    ['cbo', rules.cbo],
+    ['dit', rules.dit],
   ])('rule %s exposes meta + create()', (_name, rule) => {
     expect(rule).toBeDefined();
     expect(typeof rule.create).toBe('function');
@@ -161,6 +166,41 @@ describe('rules fire end-to-end via the registry', () => {
 
     expect(reports).toHaveLength(1);
     expect(reports[0]!.message).toContain("Function 'add' exceeds Halstead thresholds");
+  });
+
+  it('cbo registers ClassDeclaration + ClassExpression visitors and no-ops on synthetic files', () => {
+    // Hand-built classes are not in the ts-morph project; the rule must
+    // silently skip rather than throw. End-to-end fixture coverage lives in
+    // tests/rules/cbo.test.ts.
+    const klass = {
+      type: 'ClassDeclaration',
+      id: id('Tiny'),
+      body: { type: 'ClassBody', body: [] },
+    };
+
+    const { context, reports } = makeContext([{ max: 0 }]);
+    const visitors = rules.cbo.create(context);
+
+    expect(typeof visitors.ClassDeclaration).toBe('function');
+    expect(typeof visitors.ClassExpression).toBe('function');
+    expect(() => visitors.ClassDeclaration(klass)).not.toThrow();
+    expect(reports).toHaveLength(0);
+  });
+
+  it('dit registers ClassDeclaration + ClassExpression visitors and no-ops on synthetic files', () => {
+    const klass = {
+      type: 'ClassDeclaration',
+      id: id('Tiny'),
+      body: { type: 'ClassBody', body: [] },
+    };
+
+    const { context, reports } = makeContext([{ max: 0 }]);
+    const visitors = rules.dit.create(context);
+
+    expect(typeof visitors.ClassDeclaration).toBe('function');
+    expect(typeof visitors.ClassExpression).toBe('function');
+    expect(() => visitors.ClassDeclaration(klass)).not.toThrow();
+    expect(reports).toHaveLength(0);
   });
 
   it('lcom reports a class whose two methods touch disjoint instance state', () => {
