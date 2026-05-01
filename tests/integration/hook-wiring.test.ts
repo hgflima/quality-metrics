@@ -1,22 +1,20 @@
 /**
- * Integration tests — hook wiring fixtures (US-007 + US-008).
+ * Integration tests — hook wiring fixtures.
  *
- * Validates the two shipping fixtures users wire into their projects:
+ * Validates the three shipping fixtures users wire into their projects:
  *
- * - `fixtures/lintstagedrc.example.js` (US-008: pre-commit gate)
- * - `fixtures/claude-md-hook.md` (US-007: Claude Code PostToolUse)
+ * - `fixtures/lintstagedrc.example.js` — pre-commit gate
+ * - `fixtures/claude-settings.example.json` — Claude Code PostToolUse hook
+ * - `fixtures/post-edit.example.sh` — script the hook invokes
  *
- * E2E-014 (full `git commit` shell integration with the real `oxlint` binary)
- * is intentionally out of scope here — it requires an `oxlint` install plus a
+ * Full `git commit` shell integration with the real `oxlint` binary is
+ * intentionally out of scope here — it requires an `oxlint` install plus a
  * scratch git repo and lives in CI. These tests instead verify the contract
  * the fixtures encode: the lint-staged config exports a valid module shape
- * that targets `*.{ts,tsx}` and references both shipping presets, and the
- * Claude Code snippet declares a PostToolUse hook running the fast preset.
- *
- * Source of truth for the expected shape:
- * docs/mvp/03-technical-architecture.md §"Claude Code Hook Snippet"
- * docs/mvp/03-technical-architecture.md §"lint-staged Configuration"
- * docs/mvp/02-user-stories.md           §"US-007", §"US-008"
+ * that targets `*.{ts,tsx}` and references both shipping presets, the
+ * `.claude/settings.json` snippet declares a PostToolUse hook on
+ * Write/Edit/MultiEdit pointing at a `.sh` script, and the script itself
+ * runs the fast preset (and only the fast preset).
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -26,7 +24,8 @@ import { describe, it, expect, beforeAll } from 'vitest';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../..');
 const LINTSTAGED_PATH = resolve(ROOT, 'fixtures/lintstagedrc.example.js');
-const CLAUDE_MD_HOOK_PATH = resolve(ROOT, 'fixtures/claude-md-hook.md');
+const CLAUDE_SETTINGS_PATH = resolve(ROOT, 'fixtures/claude-settings.example.json');
+const POST_EDIT_SCRIPT_PATH = resolve(ROOT, 'fixtures/post-edit.example.sh');
 const FAST_CONFIG_PATH = resolve(ROOT, 'configs/oxlint.fast.json');
 const DEEP_CONFIG_PATH = resolve(ROOT, 'configs/oxlint.deep.json');
 
@@ -98,46 +97,73 @@ describe('integration: fixtures/lintstagedrc.example.js (US-008)', () => {
   });
 });
 
-describe('integration: fixtures/claude-md-hook.md (US-007)', () => {
-  let body = '';
+interface ClaudeHookEntry {
+  matcher?: string;
+  hooks?: { type?: string; command?: string }[];
+}
+interface ClaudeSettings {
+  hooks?: { PostToolUse?: ClaudeHookEntry[] };
+}
+
+describe('integration: fixtures/claude-settings.example.json + post-edit.example.sh', () => {
+  let settings: ClaudeSettings = {};
+  let script = '';
 
   beforeAll(() => {
-    body = readFileSync(CLAUDE_MD_HOOK_PATH, 'utf8');
+    settings = JSON.parse(readFileSync(CLAUDE_SETTINGS_PATH, 'utf8')) as ClaudeSettings;
+    script = readFileSync(POST_EDIT_SCRIPT_PATH, 'utf8');
   });
 
-  it('exists at the documented fixture path', () => {
-    expect(existsSync(CLAUDE_MD_HOOK_PATH)).toBe(true);
+  it('both fixtures exist at the documented paths', () => {
+    expect(existsSync(CLAUDE_SETTINGS_PATH)).toBe(true);
+    expect(existsSync(POST_EDIT_SCRIPT_PATH)).toBe(true);
   });
 
-  it('declares a PostToolUse hook trigger', () => {
-    expect(body).toMatch(/PostToolUse/);
+  it('claude-settings.example.json parses as valid JSON', () => {
+    expect(() => JSON.parse(readFileSync(CLAUDE_SETTINGS_PATH, 'utf8'))).not.toThrow();
   });
 
-  it('mentions the Write/Edit/MultiEdit tools that fire the hook', () => {
-    // The triggers are documented in the inline comment so users know which
-    // Claude Code tool calls drive the hook. All three should be referenced.
-    expect(body).toMatch(/\bWrite\b/);
-    expect(body).toMatch(/\bEdit\b/);
-    expect(body).toMatch(/\bMultiEdit\b/);
+  it('declares at least one PostToolUse hook entry', () => {
+    const entries = settings.hooks?.PostToolUse;
+    expect(Array.isArray(entries)).toBe(true);
+    expect((entries ?? []).length).toBeGreaterThan(0);
   });
 
-  it('runs the fast quality-metrics tier (oxlint.fast.json)', () => {
-    expect(body).toMatch(/oxlint[^\n]*--config[^\n]*oxlint\.fast\.json/);
+  it('matcher covers Write, Edit, and MultiEdit tool calls', () => {
+    // Claude Code matches the tool name against the regex in `matcher`. The
+    // hook must fire on all three write-class tools or agents using one of
+    // the missing ones bypass the lint gate silently.
+    const entries = settings.hooks?.PostToolUse ?? [];
+    const matches = (tool: string) =>
+      entries.some((e) => e.matcher !== undefined && new RegExp(e.matcher).test(tool));
+    expect(matches('Write')).toBe(true);
+    expect(matches('Edit')).toBe(true);
+    expect(matches('MultiEdit')).toBe(true);
   });
 
-  it('does NOT run the deep tier on PostToolUse (deep gates at pre-commit only)', () => {
+  it('wires at least one entry to a .sh command', () => {
+    const entries = settings.hooks?.PostToolUse ?? [];
+    const cmds = entries.flatMap((e) => (e.hooks ?? []).map((h) => h.command ?? ''));
+    expect(cmds.some((c) => /\.sh\b/.test(c))).toBe(true);
+  });
+
+  it('post-edit.example.sh starts with a bash shebang', () => {
+    expect(script).toMatch(/^#!\/(usr\/bin\/env bash|bin\/bash)\b/);
+  });
+
+  it('script runs the fast quality-metrics tier (oxlint.fast.json)', () => {
+    expect(script).toMatch(/oxlint[^\n]*--config[^\n]*oxlint\.fast\.json/);
+  });
+
+  it('script does NOT run the deep tier on PostToolUse (deep gates at pre-commit only)', () => {
     // Deep tier (CBO/DIT) is too expensive to run on every file write — it
     // belongs in lint-staged. The Claude Code hook must reference only the
     // fast preset, otherwise per-write latency blows past the spec budget.
-    expect(body).not.toMatch(/oxlint[^\n]*--config[^\n]*oxlint\.deep\.json/);
+    expect(script).not.toMatch(/oxlint[^\n]*--config[^\n]*oxlint\.deep\.json/);
   });
 
-  it('targets TypeScript file extensions (.ts / .tsx)', () => {
-    expect(body).toMatch(/\.tsx?\b/);
-  });
-
-  it('includes a fenced bash code block with the hook command', () => {
-    expect(body).toMatch(/```bash[\s\S]*?oxlint[\s\S]*?```/);
+  it('script filters by TypeScript file extensions (.ts / .tsx)', () => {
+    expect(script).toMatch(/\.tsx?\b/);
   });
 });
 

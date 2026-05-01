@@ -74,24 +74,48 @@ cp node_modules/quality-metrics/configs/oxlint.deep.json .
 
 ### 2. Wire the fast tier into Claude Code
 
-Append the snippet from `fixtures/claude-md-hook.md` to your project's `CLAUDE.md` (or equivalent rules file):
+Register a `PostToolUse` hook in `.claude/settings.json` so Claude Code runs the fast tier after every TypeScript file write:
 
-```markdown
-## Hooks
-
-### PostToolUse: Lint on file write
-
-After writing any TypeScript file, run the fast quality metrics tier:
-
-\`\`\`bash
-
-# Triggered by: Write, Edit, MultiEdit tools on _.ts / _.tsx files
-
-oxlint --config oxlint.fast.json "$FILE"
-\`\`\`
-
-If violations are found, fix them before writing the next file.
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/post-edit.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
+
+Then create `.claude/hooks/post-edit.sh` (and `chmod +x` it):
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Filter the edited paths down to TypeScript sources — other edits skip the hook.
+files=()
+for path in ${CLAUDE_FILE_PATHS:-}; do
+  case "$path" in
+    src/*.ts|src/*.tsx) files+=("$path") ;;
+  esac
+done
+
+[ ${#files[@]} -eq 0 ] && exit 0
+
+npx oxlint --config oxlint.fast.json "${files[@]}"
+```
+
+Claude Code sets `$CLAUDE_FILE_PATHS` to the space-separated list of paths just edited; the script narrows them to TypeScript sources and runs the fast tier only on those. Adjust the `case` patterns to match your repo layout. Violations surface back to the agent through the hook's stdout, so it sees and fixes them before the next write.
+
+See `fixtures/claude-settings.example.json` and `fixtures/post-edit.example.sh` for ready-to-copy versions.
 
 ### 3. Wire both tiers into pre-commit
 

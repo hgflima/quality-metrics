@@ -36,7 +36,7 @@ tests/
 └── fixtures/             — Generated test fixtures + e2e tsconfig
 
 configs/                  — Published presets (`oxlint.fast.json`, `oxlint.deep.json`)
-fixtures/                 — Consumer-facing examples (`claude-md-hook.md`, `lintstagedrc.example.js`)
+fixtures/                 — Consumer-facing examples (`claude-settings.example.json`, `post-edit.example.sh`, `lintstagedrc.example.js`)
 specs/                    — Design specs and architecture notes
 .claude/hooks/post-edit.sh — Rebuilds dist + runs fast tier on edited `src/*.ts(x)`
 ```
