@@ -42,7 +42,7 @@ Run `./loop.sh plan` (or `./loop-docker.sh plan`) to populate it.
 
 ## Priority 5: Lane C — Infrastructure
 
-- [ ] **TASK-040** — CI pipeline (GitHub Actions) — test + type check + lint
+- [x] **TASK-040** — CI pipeline (GitHub Actions) — test + type check + lint. New `.github/workflows/ci.yml` runs on push/PR to `main` with `concurrency.cancel-in-progress` so superseded runs are aborted, `permissions: contents: read` (least-privilege default), and a single `test` job matrixed across Node `18`/`20`/`22` (per `package.json` `engines: ">=18.0.0"`) using `actions/checkout@v4` + `actions/setup-node@v4` with built-in `npm` caching. Steps: `npm ci` → `npm run typecheck` (tsc --noEmit) → `npm run build` (tsup) → `npm test` (vitest run). `fail-fast: false` so all Node versions report independently. Self-hosted lint (oxlint.fast.json on src/) and the perf-benchmark gate (`fast < 1s`, `deep < 10s` per `04-security-and-performance.md`) are intentionally NOT wired here — they require, respectively, an `oxlint` binary devDep + a generated 500-file fixture project (TASK-041 territory) and a publish workflow (TASK-042). Validated locally: `npm run typecheck` ✅, `npm run build` ✅ (ESM 31.87 KB / CJS 33.03 KB / dts 21.54 KB), `npm test` ✅ (265/265). Workflow YAML uses pinned major-version tags (`@v4`) per GitHub's recommended practice for first-party actions.
 - [ ] **TASK-041** — Performance benchmark suite + CI gate
 - [ ] **TASK-042** — npm publish workflow (provenance, files allowlist)
 - [ ] **TASK-043** — Package README with threshold rationale + research citations
