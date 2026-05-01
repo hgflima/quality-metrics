@@ -1,0 +1,14 @@
+{
+  "$schema": "../../../node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": ["../../../dist/index.js"],
+  "rules": {
+    "quality-metrics/cbo": [
+      "error",
+      { "max": 10, "tsconfigPath": "tests/integration/oxlint-cli/tsconfig.fixtures.json" }
+    ],
+    "quality-metrics/dit": [
+      "error",
+      { "max": 3, "tsconfigPath": "tests/integration/oxlint-cli/tsconfig.fixtures.json" }
+    ]
+  }
+}
