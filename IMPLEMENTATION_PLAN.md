@@ -8,7 +8,7 @@ Run `./loop.sh plan` (or `./loop-docker.sh plan`) to populate it.
 
 - [x] **TASK-002** — Scaffold package structure (`package.json`, `tsconfig.json`, `tsup.config.ts`, `vitest.config.ts`, `src/index.ts`, directory tree, `.gitignore`). Validated: `npm install` ✅, `tsup` build produces dual ESM+CJS ✅, `vitest run` ✅, `tsc --noEmit` ✅.
 - [x] **TASK-001** — Define TypeScript contracts in `src/types.ts` (interfaces from `docs/mvp/03-technical-architecture.md`). All 10 contracts (`ReportDescriptor`, `RuleContext`, `WmcOptions`, `HalsteadOptions`, `LcomOptions`, `CboOptions`, `DitOptions`, `HalsteadMetrics`, `ClassMethodAttributes`, `ProjectSingleton`) defined and re-exported via `src/index.ts`. Validated: `tsc --noEmit` ✅, `tsup` build (ESM+CJS+dts) ✅, `vitest run` ✅.
-- [ ] **TASK-003** — Define CC helper interface + stub (`src/utils/cc.ts`) — depends on TASK-001
+- [x] **TASK-003** — Define CC helper interface + stub (`src/utils/cc.ts`). Exports `FunctionNode` (ESTree-compatible: FunctionDeclaration | FunctionExpression | ArrowFunctionExpression) and `computeCC(node: FunctionNode): number` returning `1`. Validated: `tsc --noEmit` ✅, `tsup` build ✅, `vitest run` ✅. Full traversal deferred to TASK-010.
 - [ ] **TASK-004** — Create test fixture files with hand-computed reference values — depends on TASK-001
 
 ## Priority 2: Lane A — Fast-Tier Rules (after Batch 0)
