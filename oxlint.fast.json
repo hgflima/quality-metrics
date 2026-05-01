@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["import", "typescript", "unicorn", "oxc"],
+  "jsPlugins": ["./dist/index.js"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn",
+    "style": "off",
+    "pedantic": "off"
+  },
+  "env": {
+    "node": true,
+    "es2022": true
+  },
+  "rules": {
+    "typescript/no-explicit-any": "error",
+    "typescript/consistent-type-imports": "off",
+    "import/no-cycle": "error",
+    "import/no-duplicates": "error",
+    "unicorn/prefer-node-protocol": "error",
+
+    "quality-metrics/wmc": ["error", { "max": 20 }],
+    "quality-metrics/halstead": ["warn", { "maxVolume": 1000, "maxEffort": 400 }],
+    "quality-metrics/lcom": ["warn", { "maxLcom": 2 }]
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "node_modules/**",
+    "fixtures/**",
+    "configs/**",
+    "specs/**",
+    "coverage/**",
+    "tests/**"
+  ]
+}

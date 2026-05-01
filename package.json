@@ -2,6 +2,26 @@
   "name": "quality-metrics",
   "version": "0.0.0",
   "description": "OXLint/ESLint plugin for empirically-backed code quality metrics (WMC, Halstead, LCOM, CBO, DIT)",
+  "keywords": [
+    "cbo",
+    "code-quality",
+    "dit",
+    "eslint",
+    "eslint-plugin",
+    "halstead",
+    "lcom",
+    "metrics",
+    "oxlint",
+    "oxlint-plugin",
+    "wmc"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist",
+    "configs",
+    "fixtures",
+    "README.md"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -13,39 +33,28 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": [
-    "dist",
-    "configs",
-    "fixtures",
-    "README.md"
-  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "npm run build && vitest run --config vitest.e2e.config.ts",
     "typecheck": "tsc --noEmit",
+    "lint:fast": "oxlint --config oxlint.fast.json",
+    "lint:deep": "oxlint --config oxlint.deep.json",
+    "lint": "npm run build && npm run lint:fast && npm run lint:deep",
+    "lint:fix": "npm run build && oxlint --config oxlint.fast.json --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "prepare": "simple-git-hooks",
     "bench": "vitest bench"
   },
-  "keywords": [
-    "oxlint",
-    "eslint",
-    "eslint-plugin",
-    "oxlint-plugin",
-    "code-quality",
-    "metrics",
-    "wmc",
-    "halstead",
-    "lcom",
-    "cbo",
-    "dit"
-  ],
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.11.0",
     "eslint": "^10.2.1",
+    "lint-staged": "16.4.0",
+    "oxfmt": "0.47.0",
+    "oxlint": "1.62.0",
+    "simple-git-hooks": "2.13.1",
     "ts-morph": "^28.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.3.0",
@@ -58,5 +67,11 @@
     "ts-morph": {
       "optional": true
     }
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npm run build && npx lint-staged"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript"],
+  "jsPlugins": ["./dist/index.js"],
+  "rules": {
+    "quality-metrics/cbo": ["error", { "max": 10 }],
+    "quality-metrics/dit": ["warn", { "max": 5 }]
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "node_modules/**",
+    "fixtures/**",
+    "configs/**",
+    "specs/**",
+    "coverage/**",
+    "tests/**"
+  ]
+}

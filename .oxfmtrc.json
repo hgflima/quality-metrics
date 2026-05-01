@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "semi": true,
+  "trailingComma": "all",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "arrowParens": "always",
+  "bracketSpacing": true,
+  "endOfLine": "lf",
+  "insertFinalNewline": true,
+  "objectWrap": "preserve",
+  "jsdoc": {
+    "commentLineStrategy": "keep",
+    "capitalizeDescriptions": false,
+    "lineWrappingStyle": "balance"
+  },
+  "ignorePatterns": ["dist/**", "node_modules/**", "coverage/**", "package-lock.json"]
+}

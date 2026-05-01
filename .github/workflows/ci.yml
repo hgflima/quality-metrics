@@ -40,8 +40,26 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Format check
+        if: matrix.node == '20'
+        run: npm run fmt:check
+
+      - name: Lint (fast tier — wmc, halstead, lcom)
+        if: matrix.node == '20'
+        run: npm run lint:fast
+
+      - name: Lint (deep tier — cbo, dit)
+        if: matrix.node == '20'
+        run: npm run lint:deep
+
       - name: Test
         run: npm test
+
+      - name: E2E (real oxlint CLI × plugin integration)
+        # Spawns the actual oxlint binary against fixtures to validate
+        # that the published plugin loads and all 5 rules fire end-to-end.
+        # See tests/integration/oxlint-cli/.
+        run: npm run test:e2e
 
       - name: Benchmarks (informational — gate enforced via npm test)
         # The hard CI gate (fast < 1.2s, deep < 12s on a 500-file fixture per
