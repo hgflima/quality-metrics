@@ -42,3 +42,14 @@ jobs:
 
       - name: Test
         run: npm test
+
+      - name: Benchmarks (informational — gate enforced via npm test)
+        # The hard CI gate (fast < 1.2s, deep < 12s on a 500-file fixture per
+        # docs/mvp/04-security-and-performance.md) lives in
+        # tests/benchmarks/perf-gate.test.ts and runs as part of `npm test`.
+        # This step surfaces the rich vitest bench timings (mean / p99 / hz)
+        # for trend visibility without re-gating. Failures here do not fail
+        # the workflow — only the perf-gate test does.
+        if: matrix.node == '20'
+        continue-on-error: true
+        run: npm run bench

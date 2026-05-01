@@ -154,7 +154,16 @@ export const dit = {
     }
 
     const project = singleton.project;
-    const filename = context.getFilename();
+    // ESLint v9+ exposes `context.filename` (property); legacy v8 exposes
+    // `getFilename()`. OXLint matches the v9+ shape. Read both so this rule
+    // works under any host runtime — see RuleContext in src/types.ts.
+    const filename = context.filename ?? context.getFilename?.() ?? '';
+    if (!filename) {
+      return {
+        ClassDeclaration: () => {},
+        ClassExpression: () => {},
+      };
+    }
 
     const check = (node: unknown): void => {
       if (!isAstNode(node)) return;

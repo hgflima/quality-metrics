@@ -18,7 +18,16 @@ export interface ReportDescriptor {
 
 export interface RuleContext {
   report(descriptor: ReportDescriptor): void;
-  getFilename(): string;
+  /**
+   * Source file path for the unit currently being linted. Preferred accessor —
+   * present on every modern ESLint v9+ context and on OXLint's JS-plugin
+   * context. Some legacy ESLint v8 contexts only expose `getFilename()`, so
+   * deep-tier rules read both: `context.filename ?? context.getFilename?.()`.
+   */
+  filename?: string;
+  /** Legacy ESLint v8 accessor. Deprecated in v9, removed in v10 — kept here
+   *  as an optional fallback so older host runtimes still resolve. */
+  getFilename?(): string;
   options: unknown[];
 }
 
