@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -f dist/index.js ] && echo \"$CLAUDE_FILE_PATHS\" | grep -qE 'src/.*\\.tsx?$'; then npx oxlint --config oxlint.fast.json $CLAUDE_FILE_PATHS; fi"
+            "command": ".claude/hooks/post-edit.sh"
           }
         ]
       }
