@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": ["quality-metrics"],
+  "rules": {
+    "quality-metrics/wmc": ["error", { "max": 20 }],
+    "quality-metrics/halstead": ["warn", { "maxVolume": 1000, "maxEffort": 400 }],
+    "quality-metrics/lcom": ["warn", { "maxLcom": 2 }]
+  }
+}
