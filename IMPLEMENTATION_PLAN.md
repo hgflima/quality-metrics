@@ -13,7 +13,7 @@ Run `./loop.sh plan` (or `./loop-docker.sh plan`) to populate it.
 
 ## Priority 2: Lane A — Fast-Tier Rules (after Batch 0)
 
-- [ ] **TASK-010** — Implement `cc.ts` helper (full)
+- [x] **TASK-010** — Implement `cc.ts` helper (full). Generic ESTree traversal in `src/utils/cc.ts` counts decision points (If/For/ForIn/ForOf/While/DoWhile/CatchClause/ConditionalExpression, SwitchCase with non-null `test`, LogicalExpression `&&`/`||`/`??`) and returns count + 1. Stops at nested function boundaries (`FunctionDeclaration`, `FunctionExpression`, `ArrowFunctionExpression`). Unit tests at `tests/utils/cc.test.ts` (15 cases) cover each branching type, default-case exclusion, nested-function isolation, and the per-method CCs from `tests/fixtures/wmc/high-wmc.ts` (3, 5, 4, 2, 3 → WMC 17). Validated: `tsc --noEmit` ✅, `npm run build` ✅, `npm test` ✅ (15/15).
 - [ ] **TASK-011** — Implement `halstead.ts` helper
 - [ ] **TASK-012** — Implement `this-access.ts` helper
 - [ ] **TASK-013** — Implement `rules/wmc.ts`
