@@ -200,17 +200,19 @@ describe('rules/cbo — graceful degradation', () => {
 /* ──────────────────────────────────────────────────────────────────────── */
 
 describe('rules/cbo — options handling', () => {
-  it('uses default max=10 when no options are supplied', () => {
-    // OrderController outgoing = 7 < 10 default → silent
+  it('uses default max=10 when no options are supplied — OrderController CBO=12 breaches', () => {
+    // OrderController CBO = 7 outgoing + 5 incoming = 12 > default 10 → fires.
     const reports = runOn(
       classDecl('OrderController'),
       [{ tsconfigPath: HIGH_CBO_TSCONFIG }],
       ORDER_CONTROLLER_PATH,
     );
-    expect(reports).toEqual([]);
+    expect(reports).toHaveLength(1);
+    expect(reports[0]!.data).toMatchObject({ cbo: 12, max: 10 });
   });
 
   it('treats malformed options (string) as missing — falls back to defaults', () => {
+    // Falls back to default tsconfig (no fixture loaded), so no class found.
     const reports = runOn(
       classDecl('OrderController'),
       ['not-an-object', HIGH_CBO_TSCONFIG],
@@ -232,36 +234,11 @@ describe('rules/cbo — options handling', () => {
 });
 
 /* ──────────────────────────────────────────────────────────────────────── */
-/* Outgoing count: high-cbo fixture                                          */
+/* Outgoing edges (high-cbo fixture)                                         */
 /* ──────────────────────────────────────────────────────────────────────── */
 
-describe('rules/cbo — outgoing count (high-cbo fixture)', () => {
-  it('OrderController outgoing = 7 (silent at max=10 default)', () => {
-    const reports = runOn(
-      classDecl('OrderController'),
-      [{ max: 10, tsconfigPath: HIGH_CBO_TSCONFIG }],
-      ORDER_CONTROLLER_PATH,
-    );
-    expect(reports).toEqual([]);
-  });
-
-  it('OrderController outgoing > max=6 — reports CBO=7', () => {
-    const reports = runOn(
-      classDecl('OrderController'),
-      [{ max: 6, tsconfigPath: HIGH_CBO_TSCONFIG }],
-      ORDER_CONTROLLER_PATH,
-    );
-    expect(reports).toHaveLength(1);
-    const report = reports[0]!;
-    expect(report.data).toMatchObject({
-      className: 'OrderController',
-      cbo: 7,
-      max: 6,
-      outgoingCount: 7,
-    });
-  });
-
-  it('lists all 7 expected outgoing class names (sorted, deduplicated)', () => {
+describe('rules/cbo — outgoing edges (high-cbo fixture)', () => {
+  it('OrderController outgoing list — 7 expected names, sorted and deduplicated', () => {
     const reports = runOn(
       classDecl('OrderController'),
       [{ max: 0, tsconfigPath: HIGH_CBO_TSCONFIG }],
@@ -278,17 +255,116 @@ describe('rules/cbo — outgoing count (high-cbo fixture)', () => {
       'UserRepository',
     ];
     expect(reports[0]!.data!['outgoing']).toBe(expected.join(', '));
+    expect(reports[0]!.data!['outgoingCount']).toBe(7);
   });
 
-  it('emits a diagnostic message that matches the documented format', () => {
+  it('OrderService — outgoing = 0 (no class references in its body)', () => {
+    // Hold incoming threshold loose (max=1) so we isolate the outgoing assertion.
+    // OrderService itself has incoming = 1 (from OrderController), so at max=1
+    // CBO=1 stays silent and we use a separate assertion below to prove
+    // outgoingCount === 0 via the breach flow.
+    const reports = runOn(
+      classDecl('OrderService'),
+      [{ max: 1, tsconfigPath: HIGH_CBO_TSCONFIG }],
+      ORDER_SERVICE_PATH,
+    );
+    expect(reports).toEqual([]);
+
+    // Drop max to 0 to force a report; assert outgoingCount === 0 explicitly.
+    const breach = runOn(
+      classDecl('OrderService'),
+      [{ max: 0, tsconfigPath: HIGH_CBO_TSCONFIG }],
+      ORDER_SERVICE_PATH,
+    );
+    expect(breach).toHaveLength(1);
+    expect(breach[0]!.data).toMatchObject({
+      outgoingCount: 0,
+      outgoing: '',
+      incomingCount: 1,
+    });
+  });
+});
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* Incoming edges (high-cbo fixture)                                         */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+describe('rules/cbo — incoming edges (high-cbo fixture)', () => {
+  it('OrderController incoming list — 5 expected referrers, sorted and deduplicated', () => {
     const reports = runOn(
       classDecl('OrderController'),
-      [{ max: 6, tsconfigPath: HIGH_CBO_TSCONFIG }],
+      [{ max: 0, tsconfigPath: HIGH_CBO_TSCONFIG }],
+      ORDER_CONTROLLER_PATH,
+    );
+    expect(reports).toHaveLength(1);
+    const expected = [
+      'AdminPanel',
+      'CheckoutFlow',
+      'MetricsCollector',
+      'OrderEndToEndTest',
+      'OrderRouter',
+    ];
+    expect(reports[0]!.data!['incoming']).toBe(expected.join(', '));
+    expect(reports[0]!.data!['incomingCount']).toBe(5);
+  });
+
+  it('OrderService — incoming = 1 (referenced only by OrderController)', () => {
+    const reports = runOn(
+      classDecl('OrderService'),
+      [{ max: 0, tsconfigPath: HIGH_CBO_TSCONFIG }],
+      ORDER_SERVICE_PATH,
+    );
+    expect(reports).toHaveLength(1);
+    expect(reports[0]!.data).toMatchObject({
+      cbo: 1,
+      incomingCount: 1,
+      incoming: 'OrderController',
+      outgoingCount: 0,
+    });
+  });
+});
+
+/* ──────────────────────────────────────────────────────────────────────── */
+/* Bidirectional CBO (E2E-007)                                               */
+/* ──────────────────────────────────────────────────────────────────────── */
+
+describe('rules/cbo — bidirectional total (E2E-007)', () => {
+  it('OrderController CBO = 12 (7 outgoing + 5 incoming) — breaches at max=11', () => {
+    const reports = runOn(
+      classDecl('OrderController'),
+      [{ max: 11, tsconfigPath: HIGH_CBO_TSCONFIG }],
+      ORDER_CONTROLLER_PATH,
+    );
+    expect(reports).toHaveLength(1);
+    expect(reports[0]!.data).toMatchObject({
+      className: 'OrderController',
+      cbo: 12,
+      max: 11,
+      outgoingCount: 7,
+      incomingCount: 5,
+    });
+  });
+
+  it('strict-greater-than threshold — equality (max=12) stays silent', () => {
+    const reports = runOn(
+      classDecl('OrderController'),
+      [{ max: 12, tsconfigPath: HIGH_CBO_TSCONFIG }],
+      ORDER_CONTROLLER_PATH,
+    );
+    expect(reports).toEqual([]);
+  });
+
+  it('emits the documented diagnostic message — both Outgoing and Incoming lines', () => {
+    const reports = runOn(
+      classDecl('OrderController'),
+      [{ max: 10, tsconfigPath: HIGH_CBO_TSCONFIG }],
       ORDER_CONTROLLER_PATH,
     );
     expect(reports).toHaveLength(1);
     expect(reports[0]!.message).toBe(
-      "Class 'OrderController' has CBO of 7 (max: 6).\n  Outgoing (7): AuditLogger, EmailService, InventoryService, NotificationService, OrderService, PaymentService, UserRepository",
+      "Class 'OrderController' has CBO of 12 (max: 10).\n" +
+        '  Outgoing (7): AuditLogger, EmailService, InventoryService, NotificationService, OrderService, PaymentService, UserRepository\n' +
+        '  Incoming (5): AdminPanel, CheckoutFlow, MetricsCollector, OrderEndToEndTest, OrderRouter',
     );
   });
 
@@ -301,34 +377,14 @@ describe('rules/cbo — outgoing count (high-cbo fixture)', () => {
     );
     expect(reports[0]!.node).toBe(node);
   });
-
-  it('strict-greater-than threshold — equality stays silent', () => {
-    // outgoing == 7, max == 7 → not greater than, no report.
-    const reports = runOn(
-      classDecl('OrderController'),
-      [{ max: 7, tsconfigPath: HIGH_CBO_TSCONFIG }],
-      ORDER_CONTROLLER_PATH,
-    );
-    expect(reports).toEqual([]);
-  });
-
-  it('classes that are themselves dependencies have outgoing = 0 (e.g. OrderService)', () => {
-    const reports = runOn(
-      classDecl('OrderService'),
-      [{ max: 0, tsconfigPath: HIGH_CBO_TSCONFIG }],
-      ORDER_SERVICE_PATH,
-    );
-    // OrderService has no outgoing class refs (only primitive types).
-    expect(reports).toEqual([]);
-  });
 });
 
 /* ──────────────────────────────────────────────────────────────────────── */
-/* Outgoing count: low-cbo fixture                                           */
+/* Low-cbo fixture                                                           */
 /* ──────────────────────────────────────────────────────────────────────── */
 
-describe('rules/cbo — outgoing count (low-cbo fixture)', () => {
-  it('SimpleClass outgoing = 0 — silent at max=0', () => {
+describe('rules/cbo — low-cbo fixture', () => {
+  it('SimpleClass — CBO = 0 (no incoming, no outgoing) silent at max=0', () => {
     const reports = runOn(
       classDecl('SimpleClass'),
       [{ max: 0, tsconfigPath: LOW_CBO_TSCONFIG }],
@@ -342,19 +398,23 @@ describe('rules/cbo — outgoing count (low-cbo fixture)', () => {
 /* Inheritance exclusion (E2E-008)                                           */
 /* ──────────────────────────────────────────────────────────────────────── */
 
-describe('rules/cbo — inheritance is excluded from outgoing', () => {
-  it('Labrador extends Dog — Dog is NOT counted as outgoing', () => {
+describe('rules/cbo — inheritance is excluded from both outgoing and incoming (E2E-008)', () => {
+  it('Labrador extends Dog — Dog is NOT counted as outgoing (CBO=0)', () => {
     const reports = runOn(
       classDecl('Labrador'),
       [{ max: 0, tsconfigPath: DIT_CHAIN_TSCONFIG }],
       LABRADOR_PATH,
     );
     // Labrador has no class refs in its body; `extends Dog` is the only
-    // edge and it must be excluded → outgoing = 0 → silent.
+    // edge and it must be excluded. No class references Labrador either, so
+    // both outgoing = 0 and incoming = 0 → silent.
     expect(reports).toEqual([]);
   });
 
-  it('Dog extends Mammal — Mammal is NOT counted as outgoing', () => {
+  it('Dog extends Mammal — Mammal NOT outgoing AND Labrador NOT incoming (CBO=0)', () => {
+    // Dog's only outgoing edge is `extends Mammal` → excluded.
+    // Dog's only incoming edge is `Labrador extends Dog` (heritage clause) → excluded.
+    // → CBO = 0, silent at max=0.
     const reports = runOn(
       classDecl('Dog'),
       [{ max: 0, tsconfigPath: DIT_CHAIN_TSCONFIG }],
@@ -363,7 +423,7 @@ describe('rules/cbo — inheritance is excluded from outgoing', () => {
     expect(reports).toEqual([]);
   });
 
-  it('Implementer implements Named — interface is NOT counted as outgoing', () => {
+  it('Implementer implements Named — interface heritage NOT counted (CBO=0)', () => {
     const reports = runOn(
       classDecl('Implementer'),
       [{ max: 0, tsconfigPath: DIT_SHALLOW_TSCONFIG }],
