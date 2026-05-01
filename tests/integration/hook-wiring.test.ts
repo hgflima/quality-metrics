@@ -2,8 +2,9 @@
  * Integration tests — hook wiring fixtures (US-007 + US-008).
  *
  * Validates the two shipping fixtures users wire into their projects:
- *   - `fixtures/lintstagedrc.example.js`  (US-008: pre-commit gate)
- *   - `fixtures/claude-md-hook.md`        (US-007: Claude Code PostToolUse)
+ *
+ * - `fixtures/lintstagedrc.example.js` (US-008: pre-commit gate)
+ * - `fixtures/claude-md-hook.md` (US-007: Claude Code PostToolUse)
  *
  * E2E-014 (full `git commit` shell integration with the real `oxlint` binary)
  * is intentionally out of scope here — it requires an `oxlint` install plus a
@@ -13,9 +14,9 @@
  * Claude Code snippet declares a PostToolUse hook running the fast preset.
  *
  * Source of truth for the expected shape:
- *   docs/mvp/03-technical-architecture.md §"Claude Code Hook Snippet"
- *   docs/mvp/03-technical-architecture.md §"lint-staged Configuration"
- *   docs/mvp/02-user-stories.md           §"US-007", §"US-008"
+ * docs/mvp/03-technical-architecture.md §"Claude Code Hook Snippet"
+ * docs/mvp/03-technical-architecture.md §"lint-staged Configuration"
+ * docs/mvp/02-user-stories.md           §"US-007", §"US-008"
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

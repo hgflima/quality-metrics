@@ -4,8 +4,8 @@
  * For each class declaration / expression, build the set of `this.X`
  * properties accessed by every method body, then for each unordered method
  * pair count:
- *   - P : pairs that share NO accessed properties (disjoint sets)
- *   - Q : pairs that share AT LEAST ONE accessed property
+ * - P : pairs that share NO accessed properties (disjoint sets)
+ * - Q : pairs that share AT LEAST ONE accessed property
  *
  * LCOM1 (Chidamber & Kemerer, 1994) = max(P - Q, 0).
  *
@@ -13,11 +13,11 @@
  * class node listing every unrelated (P) pair.
  *
  * What counts as a method:
- *   - `MethodDefinition` of any `kind` (`method`, `constructor`, `get`, `set`).
- *   - `PropertyDefinition` whose `value` is function-like (`FunctionExpression`,
- *     `ArrowFunctionExpression`) — class-field arrows close over the class
- *     `this`, so they belong in the cohesion footprint.
- *   - Abstract / TS-only declarations without a function body are skipped.
+ * - `MethodDefinition` of any `kind` (`method`, `constructor`, `get`, `set`).
+ * - `PropertyDefinition` whose `value` is function-like (`FunctionExpression`,
+ * `ArrowFunctionExpression`) — class-field arrows close over the class
+ * `this`, so they belong in the cohesion footprint.
+ * - Abstract / TS-only declarations without a function body are skipped.
  *
  * Pair analysis uses property-name set intersection. The empty set has empty
  * intersection with any set, so two methods that never touch `this` count as
@@ -28,15 +28,12 @@
  * traverses arrow functions (shared `this`) but stops at nested
  * function/class boundaries (own `this`).
  *
- * Diagnostic format (per docs/mvp/03-technical-architecture.md):
- *   "Class 'ReportService' has LCOM of 3 (max: 0).
- *      Unrelated method pairs: (generatePDF, sendEmail), (generatePDF, scheduleJob), (sendEmail, scheduleJob)"
+ * Diagnostic format (per docs/mvp/03-technical-architecture.md): "Class 'ReportService' has LCOM of
+ * 3 (max: 0). Unrelated method pairs: (generatePDF, sendEmail), (generatePDF, scheduleJob),
+ * (sendEmail, scheduleJob)"
  */
 
-import {
-  extractThisAccesses,
-  type FunctionLikeNode,
-} from '../utils/this-access.js';
+import { extractThisAccesses, type FunctionLikeNode } from '../utils/this-access.js';
 import {
   collectClassMethods,
   getClassName,
@@ -90,13 +87,10 @@ export const lcom = {
     const check = (node: unknown): void => {
       if (!isClassLikeNode(node)) return;
 
-      const methods = collectClassMethods<MethodAttrs>(
-        node,
-        (key, computed, value) => ({
-          name: getMethodName(key, computed),
-          accessed: extractThisAccesses(value as unknown as FunctionLikeNode),
-        }),
-      );
+      const methods = collectClassMethods<MethodAttrs>(node, (key, computed, value) => ({
+        name: getMethodName(key, computed),
+        accessed: extractThisAccesses(value as unknown as FunctionLikeNode),
+      }));
       // Need at least 2 methods to form a single pair; with fewer, P=Q=0 and
       // LCOM=0 by definition (covers the single-method fixture).
       if (methods.length < 2) return;

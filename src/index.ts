@@ -6,9 +6,9 @@
  * the namespace declared in `meta.name` (e.g. `quality-metrics/wmc`).
  *
  * Both tiers are wired:
- *   - Fast-tier (AST-only): `wmc`, `halstead`, `lcom`.
- *   - Deep-tier (ts-morph backed): `cbo`, `dit`. These gracefully no-op when
- *     the ts-morph peer dep is absent — see `src/project-singleton.ts`.
+ * - Fast-tier (AST-only): `wmc`, `halstead`, `lcom`.
+ * - Deep-tier (ts-morph backed): `cbo`, `dit`. These gracefully no-op when
+ * the ts-morph peer dep is absent — see `src/project-singleton.ts`.
  */
 
 import { wmc } from './rules/wmc.js';

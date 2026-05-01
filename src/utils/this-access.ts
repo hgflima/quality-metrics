@@ -6,21 +6,21 @@
  * per-method `accessedProperties` sets used in LCOM1 pair analysis.
  *
  * Boundary semantics (per docs/mvp/01-task-breakdown.md TASK-015):
- *   - ArrowFunctionExpression: TRAVERSED (arrows close over the enclosing
- *     `this`, so `this.X` inside an arrow refers to the same instance).
- *   - FunctionDeclaration / FunctionExpression: NOT TRAVERSED (these bind a
- *     fresh `this` at call time, so accesses inside don't belong to the
- *     enclosing method's cohesion footprint).
- *   - ClassDeclaration / ClassExpression: NOT TRAVERSED (their methods bind
- *     their own `this`).
+ * - ArrowFunctionExpression: TRAVERSED (arrows close over the enclosing
+ * `this`, so `this.X` inside an arrow refers to the same instance).
+ * - FunctionDeclaration / FunctionExpression: NOT TRAVERSED (these bind a
+ * fresh `this` at call time, so accesses inside don't belong to the
+ * enclosing method's cohesion footprint).
+ * - ClassDeclaration / ClassExpression: NOT TRAVERSED (their methods bind
+ * their own `this`).
  *
  * Capture rules:
- *   - `this.foo`           → captured as `'foo'`
- *   - `this.#foo`          → captured as `'#foo'` (PrivateIdentifier)
- *   - `this['foo']`        → captured as `'foo'`  (string-literal computed key)
- *   - `this[x]`            → NOT captured (dynamic key, can't resolve statically)
- *   - `this.foo.bar`       → captures `'foo'` only (the directly-on-this prop)
- *   - bare `this`          → NOT captured (no property access)
+ * - `this.foo`           → captured as `'foo'`
+ * - `this.#foo`          → captured as `'#foo'` (PrivateIdentifier)
+ * - `this['foo']`        → captured as `'foo'`  (string-literal computed key)
+ * - `this[x]`            → NOT captured (dynamic key, can't resolve statically)
+ * - `this.foo.bar`       → captures `'foo'` only (the directly-on-this prop)
+ * - bare `this`          → NOT captured (no property access)
  */
 
 interface AstNode {
@@ -55,10 +55,7 @@ const FN_BOUNDARY_TYPES: ReadonlySet<string> = new Set([
   'FunctionExpression',
 ]);
 
-const CLASS_BOUNDARY_TYPES: ReadonlySet<string> = new Set([
-  'ClassDeclaration',
-  'ClassExpression',
-]);
+const CLASS_BOUNDARY_TYPES: ReadonlySet<string> = new Set(['ClassDeclaration', 'ClassExpression']);
 
 function isAstNode(value: unknown): value is AstNode {
   return (

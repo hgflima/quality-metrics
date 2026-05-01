@@ -12,14 +12,8 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const HIGH_CBO_TSCONFIG = path.resolve(
-  __dirname,
-  'fixtures/cbo/high-cbo/tsconfig.json',
-);
-const LOW_CBO_TSCONFIG = path.resolve(
-  __dirname,
-  'fixtures/cbo/low-cbo/tsconfig.json',
-);
+const HIGH_CBO_TSCONFIG = path.resolve(__dirname, 'fixtures/cbo/high-cbo/tsconfig.json');
+const LOW_CBO_TSCONFIG = path.resolve(__dirname, 'fixtures/cbo/low-cbo/tsconfig.json');
 
 afterEach(() => {
   setTsMorphLoader(null);
@@ -34,9 +28,7 @@ describe('getProjectSingleton — caching', () => {
   it('returns the same instance for repeated calls with the same tsconfigPath', () => {
     const fakeProject = { id: 'P1' };
     const loader: TsMorphLoader = vi.fn(() => ({
-      Project: vi.fn(() => fakeProject) as unknown as TsMorphLoader extends never
-        ? never
-        : never,
+      Project: vi.fn(() => fakeProject) as unknown as TsMorphLoader extends never ? never : never,
     })) as unknown as TsMorphLoader;
     setTsMorphLoader(loader);
 
@@ -56,7 +48,7 @@ describe('getProjectSingleton — caching', () => {
       projects.set(key, obj);
       return obj;
     });
-    setTsMorphLoader(() => ({ Project } as unknown as ReturnType<TsMorphLoader>));
+    setTsMorphLoader(() => ({ Project }) as unknown as ReturnType<TsMorphLoader>);
 
     const a = getProjectSingleton('/abs/a/tsconfig.json');
     const b = getProjectSingleton('/abs/b/tsconfig.json');
@@ -68,7 +60,7 @@ describe('getProjectSingleton — caching', () => {
 
   it("treats missing tsconfigPath as the cache key '<default>'", () => {
     const Project = vi.fn(() => ({}));
-    setTsMorphLoader(() => ({ Project } as unknown as ReturnType<TsMorphLoader>));
+    setTsMorphLoader(() => ({ Project }) as unknown as ReturnType<TsMorphLoader>);
 
     const first = getProjectSingleton();
     const second = getProjectSingleton(undefined);
@@ -79,7 +71,7 @@ describe('getProjectSingleton — caching', () => {
 
   it('passes tsConfigFilePath to the Project constructor when provided', () => {
     const Project = vi.fn(() => ({}));
-    setTsMorphLoader(() => ({ Project } as unknown as ReturnType<TsMorphLoader>));
+    setTsMorphLoader(() => ({ Project }) as unknown as ReturnType<TsMorphLoader>);
 
     getProjectSingleton('/some/tsconfig.json');
 
@@ -88,7 +80,7 @@ describe('getProjectSingleton — caching', () => {
 
   it('omits tsConfigFilePath when not provided (default Project)', () => {
     const Project = vi.fn(() => ({}));
-    setTsMorphLoader(() => ({ Project } as unknown as ReturnType<TsMorphLoader>));
+    setTsMorphLoader(() => ({ Project }) as unknown as ReturnType<TsMorphLoader>);
 
     getProjectSingleton();
 
@@ -113,9 +105,7 @@ describe('getProjectSingleton — failure handling', () => {
   });
 
   it('returns isAvailable: false when the loader returns a non-Project module', () => {
-    setTsMorphLoader(
-      () => ({} as unknown as ReturnType<TsMorphLoader>),
-    );
+    setTsMorphLoader(() => ({}) as unknown as ReturnType<TsMorphLoader>);
 
     const result = getProjectSingleton();
     expect(result.isAvailable).toBe(false);
@@ -126,7 +116,7 @@ describe('getProjectSingleton — failure handling', () => {
     const Project = vi.fn(() => {
       throw new Error('bad tsconfig');
     });
-    setTsMorphLoader(() => ({ Project } as unknown as ReturnType<TsMorphLoader>));
+    setTsMorphLoader(() => ({ Project }) as unknown as ReturnType<TsMorphLoader>);
 
     const result = getProjectSingleton('/missing/tsconfig.json');
     expect(result.isAvailable).toBe(false);
@@ -174,8 +164,7 @@ describe('getProjectSingleton — failure handling', () => {
     const result = getProjectSingleton();
 
     try {
-      void (result.project as unknown as { addSourceFileAtPath: unknown })
-        .addSourceFileAtPath;
+      void (result.project as unknown as { addSourceFileAtPath: unknown }).addSourceFileAtPath;
       throw new Error('expected throw');
     } catch (e) {
       expect((e as Error).message).toContain('accessed: addSourceFileAtPath');
@@ -201,9 +190,12 @@ describe('setTsMorphLoader / resetProjectSingleton', () => {
   });
 
   it('setTsMorphLoader(null) restores the default loader', () => {
-    setTsMorphLoader(() => ({
-      Project: vi.fn(() => ({ tag: 'stub' })),
-    }) as unknown as ReturnType<TsMorphLoader>);
+    setTsMorphLoader(
+      () =>
+        ({
+          Project: vi.fn(() => ({ tag: 'stub' })),
+        }) as unknown as ReturnType<TsMorphLoader>,
+    );
     const stub = getProjectSingleton();
     expect((stub.project as { tag: string }).tag).toBe('stub');
 
@@ -218,7 +210,7 @@ describe('setTsMorphLoader / resetProjectSingleton', () => {
 
   it('resetProjectSingleton clears the cache without changing the loader', () => {
     const Project = vi.fn(() => ({}));
-    setTsMorphLoader(() => ({ Project } as unknown as ReturnType<TsMorphLoader>));
+    setTsMorphLoader(() => ({ Project }) as unknown as ReturnType<TsMorphLoader>);
 
     getProjectSingleton('/x/tsconfig.json');
     getProjectSingleton('/x/tsconfig.json');

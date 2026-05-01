@@ -33,7 +33,7 @@ A token is an **operator** if it falls into one of the following groups:
 A token is an **operand** if it is:
 
 1. An **identifier** (variable name, function name, parameter, property name in
-   a member expression). Object-literal *shorthand* properties (`{ foo }`)
+   a member expression). Object-literal _shorthand_ properties (`{ foo }`)
    contribute the identifier exactly once.
 2. A **literal**: numeric, string, template-string raw value, boolean (`true`,
    `false`), `null`, `undefined`. Each distinct literal value counts once
@@ -78,7 +78,7 @@ function add(a: number, b: number): number {
 Tokens (types stripped):
 
 | Token       | Class    |
-|-------------|----------|
+| ----------- | -------- |
 | `function`  | operator |
 | `add`       | operand  |
 | `a` (param) | operand  |

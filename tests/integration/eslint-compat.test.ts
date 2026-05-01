@@ -2,12 +2,12 @@
  * Integration tests — ESLint v9/v10 flat-config compatibility.
  *
  * Covers:
- *   - E2E-015: ESLint flat config loads the plugin and fires `quality-metrics/wmc`
- *     and `quality-metrics/lcom` against TypeScript-compatible source code.
- *   - E2E-016: The plugin's rule namespace prevents double-firing with
- *     `eslint-plugin-oxlint`. Since `quality-metrics/*` is plugin-only on both
- *     OXLint and ESLint sides (not a native OXLint rule), each rule fires
- *     exactly once per linter.
+ *
+ * - E2E-015: ESLint flat config loads the plugin and fires `quality-metrics/wmc` and
+ *   `quality-metrics/lcom` against TypeScript-compatible source code.
+ * - E2E-016: The plugin's rule namespace prevents double-firing with `eslint-plugin-oxlint`. Since
+ *   `quality-metrics/*` is plugin-only on both OXLint and ESLint sides (not a native OXLint rule),
+ *   each rule fires exactly once per linter.
  *
  * The end-to-end fixture coverage for individual rules lives in
  * `tests/rules/*.test.ts`. These integration tests verify the wiring through

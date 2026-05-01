@@ -20,10 +20,14 @@ export class OrderService {
 
   create(type: string): void {
     switch (type) {
-      case 'a': break;
-      case 'b': break;
-      case 'c': break;
-      case 'd': break;
+      case 'a':
+        break;
+      case 'b':
+        break;
+      case 'c':
+        break;
+      case 'd':
+        break;
     }
   }
 

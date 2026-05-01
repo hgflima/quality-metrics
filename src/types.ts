@@ -25,8 +25,10 @@ export interface RuleContext {
    * deep-tier rules read both: `context.filename ?? context.getFilename?.()`.
    */
   filename?: string;
-  /** Legacy ESLint v8 accessor. Deprecated in v9, removed in v10 — kept here
-   *  as an optional fallback so older host runtimes still resolve. */
+  /**
+   * Legacy ESLint v8 accessor. Deprecated in v9, removed in v10 — kept here
+   * as an optional fallback so older host runtimes still resolve.
+   */
   getFilename?(): string;
   options: unknown[];
 }

@@ -2,12 +2,12 @@
  * Shared ts-morph Project singleton for deep-tier rules (CBO, DIT).
  *
  * Architecture (per docs/mvp/03-technical-architecture.md):
- *   - OXLint runs `createOnce` once per lint run; deep-tier rules call
- *     `getProjectSingleton(tsconfigPath)` from there to obtain a single Project
- *     instance shared by every visitor.
- *   - ESLint has no `createOnce`, so the same module-level cache provides the
- *     equivalent guarantee: only the first `create()` call pays the load cost,
- *     subsequent calls reuse the cached Project.
+ *
+ * - OXLint runs `createOnce` once per lint run; deep-tier rules call
+ *   `getProjectSingleton(tsconfigPath)` from there to obtain a single Project instance shared by
+ *   every visitor.
+ * - ESLint has no `createOnce`, so the same module-level cache provides the equivalent guarantee:
+ *   only the first `create()` call pays the load cost, subsequent calls reuse the cached Project.
  *
  * `ts-morph` is an *optional* peer dependency. If it is not installed (fast-tier
  * users who never opt into CBO/DIT), or if construction fails (bad
@@ -20,9 +20,7 @@ import { createRequire } from 'node:module';
 import type { ProjectSingleton } from './types.js';
 
 type TsMorphProject = import('ts-morph').Project;
-type TsMorphProjectOptions = ConstructorParameters<
-  typeof import('ts-morph').Project
->[0];
+type TsMorphProjectOptions = ConstructorParameters<typeof import('ts-morph').Project>[0];
 
 interface TsMorphModule {
   Project: new (opts?: TsMorphProjectOptions) => TsMorphProject;
@@ -90,9 +88,7 @@ function buildSingleton(tsconfigPath?: string): ProjectSingleton {
     mod === undefined ||
     typeof (mod as { Project?: unknown }).Project !== 'function'
   ) {
-    return unavailable(
-      'ts-morph module loaded but does not export a Project constructor',
-    );
+    return unavailable('ts-morph module loaded but does not export a Project constructor');
   }
 
   try {
@@ -101,9 +97,7 @@ function buildSingleton(tsconfigPath?: string): ProjectSingleton {
       : new mod.Project();
     return { project, isAvailable: true };
   } catch (e) {
-    return unavailable(
-      `Failed to construct ts-morph Project: ${describeError(e)}`,
-    );
+    return unavailable(`Failed to construct ts-morph Project: ${describeError(e)}`);
   }
 }
 

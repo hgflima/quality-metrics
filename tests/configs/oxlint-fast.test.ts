@@ -13,7 +13,7 @@ import { rules } from '../../src/index';
  * disable rules on consumer projects.
  *
  * Source of truth for the expected shape:
- *   docs/mvp/03-technical-architecture.md §"oxlint.fast.json"
+ * docs/mvp/03-technical-architecture.md §"oxlint.fast.json"
  */
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -115,17 +115,12 @@ describe('configs/oxlint.fast.json — halstead entry', () => {
 
   it('options keys are accepted by the rule schema', () => {
     const cfg = loadConfig();
-    const entry = cfg.rules['quality-metrics/halstead'] as [
-      string,
-      Record<string, unknown>,
-    ];
+    const entry = cfg.rules['quality-metrics/halstead'] as [string, Record<string, unknown>];
     const allowed = Object.keys(
       (rules.halstead.meta.schema[0] as { properties: Record<string, unknown> }).properties,
     );
     for (const key of Object.keys(entry[1])) {
-      expect(allowed, `halstead option '${key}' must be defined in rule schema`).toContain(
-        key,
-      );
+      expect(allowed, `halstead option '${key}' must be defined in rule schema`).toContain(key);
     }
   });
 });

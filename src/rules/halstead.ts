@@ -8,9 +8,9 @@
  * a single diagnostic is emitted on the function node.
  *
  * Definition (Halstead, 1977):
- *   V = N · log₂(η)
- *   D = (η₁ / 2) · (N₂ / η₂)
- *   E = D · V
+ * V = N · log₂(η)
+ * D = (η₁ / 2) · (N₂ / η₂)
+ * E = D · V
  *
  * Each function is measured in isolation — the helper stops at nested
  * function-like boundaries so an outer function's measurement never includes
@@ -18,16 +18,12 @@
  * separately on each nested function, so each gets its own report.
  *
  * Diagnostic format (per docs/mvp/03-technical-architecture.md):
- *   "Function 'processOrder' exceeds Halstead thresholds.
- *      Volume: 1240 (max: 1000) | Effort: 520 (max: 400) | Difficulty: 18.4"
+ * "Function 'processOrder' exceeds Halstead thresholds.
+ * Volume: 1240 (max: 1000) | Effort: 520 (max: 400) | Difficulty: 18.4"
  */
 
 import { computeHalstead } from '../utils/halstead.js';
-import {
-  getMethodName,
-  isAstNode,
-  type AstNode,
-} from '../utils/ast-shared.js';
+import { getMethodName, isAstNode, type AstNode } from '../utils/ast-shared.js';
 import type { HalsteadOptions, RuleContext } from '../types.js';
 
 const DEFAULT_MAX_VOLUME = 1000;
@@ -37,21 +33,18 @@ const DEFAULT_MAX_EFFORT = 400;
  * Resolve a human-readable name for a function-like node.
  *
  * Preference order:
- *   1. The function's own `id` (named FunctionDeclaration / FunctionExpression).
- *   2. The enclosing binding context exposed via `node.parent` (set by the
- *      ESLint / OXLint traversal):
- *      - `VariableDeclarator` with an `Identifier` id
- *      - `AssignmentExpression` to an `Identifier` or `MemberExpression`
- *      - `MethodDefinition` / `PropertyDefinition` / `Property` / `ObjectProperty`
- *   3. `<anonymous>` as a final fallback.
+ *
+ * 1. The function's own `id` (named FunctionDeclaration / FunctionExpression).
+ * 2. The enclosing binding context exposed via `node.parent` (set by the ESLint / OXLint traversal):
+ *
+ *    - `VariableDeclarator` with an `Identifier` id
+ *    - `AssignmentExpression` to an `Identifier` or `MemberExpression`
+ *    - `MethodDefinition` / `PropertyDefinition` / `Property` / `ObjectProperty`
+ * 3. `<anonymous>` as a final fallback.
  */
 function getFunctionName(node: AstNode): string {
   const ownId = node['id'];
-  if (
-    isAstNode(ownId) &&
-    ownId.type === 'Identifier' &&
-    typeof ownId['name'] === 'string'
-  ) {
+  if (isAstNode(ownId) && ownId.type === 'Identifier' && typeof ownId['name'] === 'string') {
     return ownId['name'];
   }
 
@@ -61,11 +54,7 @@ function getFunctionName(node: AstNode): string {
   switch (parent.type) {
     case 'VariableDeclarator': {
       const idNode = parent['id'];
-      if (
-        isAstNode(idNode) &&
-        idNode.type === 'Identifier' &&
-        typeof idNode['name'] === 'string'
-      ) {
+      if (isAstNode(idNode) && idNode.type === 'Identifier' && typeof idNode['name'] === 'string') {
         return idNode['name'];
       }
       return '<anonymous>';
@@ -78,11 +67,7 @@ function getFunctionName(node: AstNode): string {
         }
         if (left.type === 'MemberExpression') {
           const prop = left['property'];
-          if (
-            isAstNode(prop) &&
-            prop.type === 'Identifier' &&
-            typeof prop['name'] === 'string'
-          ) {
+          if (isAstNode(prop) && prop.type === 'Identifier' && typeof prop['name'] === 'string') {
             return prop['name'];
           }
         }

@@ -4,14 +4,15 @@
  * Asserts that the plugin's two tiers stay within the architectural budget
  * declared in `docs/mvp/04-security-and-performance.md`:
  *
- *   - Fast tier (WMC + Halstead + LCOM):              < 1s on 500 files
- *   - Deep tier (CBO + DIT, after createOnce warmup): < 10s on 500 files
+ * - Fast tier (WMC + Halstead + LCOM): < 1s on 500 files
+ * - Deep tier (CBO + DIT, after createOnce warmup): < 10s on 500 files
  *
- *   "CI fails if either benchmark exceeds its target by > 20%."
+ * "CI fails if either benchmark exceeds its target by > 20%."
  *
  * The 20% tolerance is applied here:
- *   - Fast budget = 1.0s + 20% = 1.2s
- *   - Deep budget = 10.0s + 20% = 12.0s
+ *
+ * - Fast budget = 1.0s + 20% = 1.2s
+ * - Deep budget = 10.0s + 20% = 12.0s
  *
  * Tolerance escape hatch: set `QM_PERF_TOLERANCE=<float>` (e.g. `2.0` to allow
  * 2x the architectural target) to relax the gate for slow CI runners. The
@@ -92,84 +93,71 @@ describe.skipIf(skip)('performance gate — 500-file fixture project', () => {
     expect(fixtures.files).toHaveLength(FIXTURE_FILE_COUNT);
   });
 
-  it(
-    `fast tier (WMC + Halstead + LCOM) completes within ${FAST_BUDGET_WITH_TOLERANCE_MS}ms (target ${FAST_BUDGET_MS}ms × ${tolerance}x)`,
-    () => {
-      // ESLint flat-config `files` globs are resolved relative to the Linter's
-      // cwd. The fixture lives under a tmpdir() outside the project root, so we
-      // anchor cwd to the fixture root — otherwise every verify() returns a
-      // single "No matching configuration found" diagnostic and silently skips
-      // every rule.
-      const linter = new Linter({ cwd: fixtures.rootDir });
-      const config = {
-        ...FLAT_CONFIG_BASE,
-        rules: {
-          'quality-metrics/wmc': ['error', { max: 20 }],
-          'quality-metrics/halstead': [
-            'warn',
-            { maxVolume: 1000, maxEffort: 400 },
-          ],
-          'quality-metrics/lcom': ['warn', { maxLcom: 2 }],
-        },
-      } as never;
+  it(`fast tier (WMC + Halstead + LCOM) completes within ${FAST_BUDGET_WITH_TOLERANCE_MS}ms (target ${FAST_BUDGET_MS}ms × ${tolerance}x)`, () => {
+    // ESLint flat-config `files` globs are resolved relative to the Linter's
+    // cwd. The fixture lives under a tmpdir() outside the project root, so we
+    // anchor cwd to the fixture root — otherwise every verify() returns a
+    // single "No matching configuration found" diagnostic and silently skips
+    // every rule.
+    const linter = new Linter({ cwd: fixtures.rootDir });
+    const config = {
+      ...FLAT_CONFIG_BASE,
+      rules: {
+        'quality-metrics/wmc': ['error', { max: 20 }],
+        'quality-metrics/halstead': ['warn', { maxVolume: 1000, maxEffort: 400 }],
+        'quality-metrics/lcom': ['warn', { maxLcom: 2 }],
+      },
+    } as never;
 
-      const start = performance.now();
-      let fatalCount = 0;
-      let processedFiles = 0;
-      for (const f of fixtures.files) {
-        const messages = linter.verify(f.source, config, f.filePath);
-        for (const m of messages) {
-          if (m.fatal) fatalCount++;
-        }
-        processedFiles++;
+    const start = performance.now();
+    let fatalCount = 0;
+    let processedFiles = 0;
+    for (const f of fixtures.files) {
+      const messages = linter.verify(f.source, config, f.filePath);
+      for (const m of messages) {
+        if (m.fatal) fatalCount++;
       }
-      const elapsed = performance.now() - start;
+      processedFiles++;
+    }
+    const elapsed = performance.now() - start;
 
-      expect(processedFiles).toBe(FIXTURE_FILE_COUNT);
-      expect(fatalCount).toBe(0);
-      // eslint-disable-next-line no-console
-      console.log(`[perf-gate] fast tier elapsed: ${elapsed.toFixed(1)}ms (budget ${FAST_BUDGET_WITH_TOLERANCE_MS}ms)`);
-      expect(elapsed).toBeLessThan(FAST_BUDGET_WITH_TOLERANCE_MS);
-    },
-    60_000,
-  );
+    expect(processedFiles).toBe(FIXTURE_FILE_COUNT);
+    expect(fatalCount).toBe(0);
+    // eslint-disable-next-line no-console
+    console.log(
+      `[perf-gate] fast tier elapsed: ${elapsed.toFixed(1)}ms (budget ${FAST_BUDGET_WITH_TOLERANCE_MS}ms)`,
+    );
+    expect(elapsed).toBeLessThan(FAST_BUDGET_WITH_TOLERANCE_MS);
+  }, 60_000);
 
-  it(
-    `deep tier (CBO + DIT) completes within ${DEEP_BUDGET_WITH_TOLERANCE_MS}ms (target ${DEEP_BUDGET_MS}ms × ${tolerance}x)`,
-    () => {
-      const linter = new Linter({ cwd: fixtures.rootDir });
-      const config = {
-        ...FLAT_CONFIG_BASE,
-        rules: {
-          'quality-metrics/cbo': [
-            'error',
-            { max: 10, tsconfigPath: fixtures.tsconfigPath },
-          ],
-          'quality-metrics/dit': [
-            'warn',
-            { max: 5, tsconfigPath: fixtures.tsconfigPath },
-          ],
-        },
-      } as never;
+  it(`deep tier (CBO + DIT) completes within ${DEEP_BUDGET_WITH_TOLERANCE_MS}ms (target ${DEEP_BUDGET_MS}ms × ${tolerance}x)`, () => {
+    const linter = new Linter({ cwd: fixtures.rootDir });
+    const config = {
+      ...FLAT_CONFIG_BASE,
+      rules: {
+        'quality-metrics/cbo': ['error', { max: 10, tsconfigPath: fixtures.tsconfigPath }],
+        'quality-metrics/dit': ['warn', { max: 5, tsconfigPath: fixtures.tsconfigPath }],
+      },
+    } as never;
 
-      const start = performance.now();
-      let fatalCount = 0;
-      let processedFiles = 0;
-      for (const f of fixtures.files) {
-        const messages = linter.verify(f.source, config, f.filePath);
-        for (const m of messages) {
-          if (m.fatal) fatalCount++;
-        }
-        processedFiles++;
+    const start = performance.now();
+    let fatalCount = 0;
+    let processedFiles = 0;
+    for (const f of fixtures.files) {
+      const messages = linter.verify(f.source, config, f.filePath);
+      for (const m of messages) {
+        if (m.fatal) fatalCount++;
       }
-      const elapsed = performance.now() - start;
+      processedFiles++;
+    }
+    const elapsed = performance.now() - start;
 
-      expect(processedFiles).toBe(FIXTURE_FILE_COUNT);
-      expect(fatalCount).toBe(0);
-      // eslint-disable-next-line no-console
-      console.log(`[perf-gate] deep tier elapsed: ${elapsed.toFixed(1)}ms (budget ${DEEP_BUDGET_WITH_TOLERANCE_MS}ms)`);
-      expect(elapsed).toBeLessThan(DEEP_BUDGET_WITH_TOLERANCE_MS);
-    },
-    120_000,
-  );
+    expect(processedFiles).toBe(FIXTURE_FILE_COUNT);
+    expect(fatalCount).toBe(0);
+    // eslint-disable-next-line no-console
+    console.log(
+      `[perf-gate] deep tier elapsed: ${elapsed.toFixed(1)}ms (budget ${DEEP_BUDGET_WITH_TOLERANCE_MS}ms)`,
+    );
+    expect(elapsed).toBeLessThan(DEEP_BUDGET_WITH_TOLERANCE_MS);
+  }, 120_000);
 });

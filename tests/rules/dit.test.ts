@@ -3,10 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { dit } from '../../src/rules/dit';
-import {
-  resetProjectSingleton,
-  setTsMorphLoader,
-} from '../../src/project-singleton';
+import { resetProjectSingleton, setTsMorphLoader } from '../../src/project-singleton';
 import type { ReportDescriptor, RuleContext } from '../../src/types';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -50,11 +47,7 @@ function makeContext(
   return { context, reports };
 }
 
-function runOn(
-  node: unknown,
-  options: unknown[],
-  filename: string,
-): CapturedReport[] {
+function runOn(node: unknown, options: unknown[], filename: string): CapturedReport[] {
   const { context, reports } = makeContext(options, filename);
   const visitors = dit.create(context);
   if (!node || typeof node !== 'object') return reports;
@@ -125,10 +118,7 @@ describe('rules/dit — meta & schema', () => {
       additionalProperties: boolean;
     };
     expect(schema.type).toBe('object');
-    expect(Object.keys(schema.properties).sort()).toEqual([
-      'max',
-      'tsconfigPath',
-    ]);
+    expect(Object.keys(schema.properties).sort()).toEqual(['max', 'tsconfigPath']);
     expect(schema.additionalProperties).toBe(false);
   });
 
@@ -221,11 +211,7 @@ describe('rules/dit — options handling', () => {
   it('respects partial options — max specified, tsconfigPath missing', () => {
     // Without tsconfigPath the default ts-morph project has no source files
     // loaded → file lookup fails → silent.
-    const reports = runOn(
-      classDecl('Labrador'),
-      [{ max: 0 }],
-      LABRADOR_PATH,
-    );
+    const reports = runOn(classDecl('Labrador'), [{ max: 0 }], LABRADOR_PATH);
     expect(reports).toEqual([]);
   });
 
@@ -333,11 +319,7 @@ describe('rules/dit — cross-file chain (E2E-010)', () => {
 
   it('attaches the class node as the diagnostic location', () => {
     const node = classDecl('Labrador');
-    const reports = runOn(
-      node,
-      [{ max: 0, tsconfigPath: DIT_CHAIN_TSCONFIG }],
-      LABRADOR_PATH,
-    );
+    const reports = runOn(node, [{ max: 0, tsconfigPath: DIT_CHAIN_TSCONFIG }], LABRADOR_PATH);
     expect(reports[0]!.node).toBe(node);
   });
 });
@@ -409,8 +391,6 @@ describe('rules/dit — visitor wiring', () => {
     const visitors = dit.create(context);
     expect(typeof visitors.ClassDeclaration).toBe('function');
     expect(typeof visitors.ClassExpression).toBe('function');
-    expect(() =>
-      visitors.ClassDeclaration?.(classDecl('Anything')),
-    ).not.toThrow();
+    expect(() => visitors.ClassDeclaration?.(classDecl('Anything'))).not.toThrow();
   });
 });

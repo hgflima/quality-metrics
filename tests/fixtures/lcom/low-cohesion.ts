@@ -6,10 +6,19 @@
 // LCOM1 = max(P - Q, 0) = max(3, 0) = 3
 // DO NOT MODIFY without updating tests/rules/lcom.test.ts expected values.
 
-interface Database { save(user: User): void }
-interface Mailer { send(email: string): void }
-interface Cache { delete(id: string): void }
-interface User { id: string; name: string }
+interface Database {
+  save(user: User): void;
+}
+interface Mailer {
+  send(email: string): void;
+}
+interface Cache {
+  delete(id: string): void;
+}
+interface User {
+  id: string;
+  name: string;
+}
 
 export class MixedService {
   private db!: Database;

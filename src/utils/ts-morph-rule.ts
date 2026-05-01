@@ -2,26 +2,19 @@
  * Shared wiring for deep-tier (ts-morph backed) class rules.
  *
  * `cbo` and `dit` both:
- *   1. acquire the project singleton (no-op when ts-morph is unavailable),
- *   2. read the linted file path from the rule context (v8/v9 fallback),
- *   3. resolve the named class in the ts-morph project,
- *   4. run a per-rule analysis and possibly report.
+ * 1. acquire the project singleton (no-op when ts-morph is unavailable),
+ * 2. read the linted file path from the rule context (v8/v9 fallback),
+ * 3. resolve the named class in the ts-morph project,
+ * 4. run a per-rule analysis and possibly report.
  *
  * `createDeepClassVisitor` factors out steps 1–3 so each rule's `create` body
  * is just its analysis logic.
  */
 
 import { getProjectSingleton } from '../project-singleton.js';
-import {
-  getClassName,
-  isClassLikeNode,
-  type ClassLikeNode,
-} from './ast-shared.js';
+import { getClassName, isClassLikeNode, type ClassLikeNode } from './ast-shared.js';
 import type { RuleContext } from '../types.js';
-import type {
-  ClassDeclaration as TsMorphClassDeclaration,
-  Project,
-} from 'ts-morph';
+import type { ClassDeclaration as TsMorphClassDeclaration, Project } from 'ts-morph';
 
 /**
  * Resolve a class declaration in a ts-morph project by file path + class name.

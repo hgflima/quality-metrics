@@ -4,20 +4,22 @@
  * Materializes a representative 500-file TypeScript project on disk under a
  * caller-supplied directory:
  *
- *   <root>/
- *     tsconfig.json            — included for ts-morph (deep-tier benchmarks).
- *     fixture_000.ts ... fixture_NNN.ts
+ * <root>/
+ * tsconfig.json            — included for ts-morph (deep-tier benchmarks).
+ * fixture_000.ts ... fixture_NNN.ts
  *
  * The files are structured as a forest of inheritance chains (depth `CHAIN_DEPTH`,
  * `CHAIN_DEPTH = 5`):
- *   - chain root: a base class with no `extends`.
- *   - subsequent files: `extends` the previous file in the chain.
+ *
+ * - chain root: a base class with no `extends`.
+ * - subsequent files: `extends` the previous file in the chain.
  *
  * Each class has a constructor + several methods with branching and `this.X`
  * access so all five rules (WMC, Halstead, LCOM, CBO, DIT) have signal to
  * compute on. Output is purely JavaScript-compatible (no TS-only constructs):
- *   - Default ESLint parser (`espree`) accepts the same source verbatim.
- *   - `ts-morph` accepts it as TypeScript with no type annotations.
+ *
+ * - Default ESLint parser (`espree`) accepts the same source verbatim.
+ * - `ts-morph` accepts it as TypeScript with no type annotations.
  *
  * Generation is deterministic: two calls with the same `count` produce identical
  * file contents and identical chain topology.
@@ -51,10 +53,7 @@ export interface GeneratedFixtureSet {
  * (if it exists) and recreated. Returns the materialized file metadata so
  * callers can iterate without re-reading disk.
  */
-export function generateFixtureProject(
-  rootDir: string,
-  count: number,
-): GeneratedFixtureSet {
+export function generateFixtureProject(rootDir: string, count: number): GeneratedFixtureSet {
   rmSync(rootDir, { recursive: true, force: true });
   mkdirSync(rootDir, { recursive: true });
 
@@ -101,9 +100,9 @@ function classNameFor(i: number): string {
 
 /**
  * Chain root — no `extends`. Includes:
- *   - constructor with property initialization
- *   - 4 methods exercising branches, `this.X` access (some shared, some
- *     disjoint), and arithmetic / logical operators (Halstead signal).
+ * - constructor with property initialization
+ * - 4 methods exercising branches, `this.X` access (some shared, some
+ * disjoint), and arithmetic / logical operators (Halstead signal).
  *
  * `seed` is folded into a couple of integer literals so consecutive roots are
  * not byte-identical (keeps Halstead operand counts non-trivially varied).

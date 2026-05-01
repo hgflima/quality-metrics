@@ -6,18 +6,19 @@
  * the class node with the per-method contributions.
  *
  * Definition (Chidamber & Kemerer, 1994):
- *   WMC = Σ CC(method_i) for all methods of the class.
+ * WMC = Σ CC(method_i) for all methods of the class.
  *
  * What counts as a method:
- *   - `MethodDefinition` of any `kind` (`method`, `constructor`, `get`, `set`).
- *   - `PropertyDefinition` whose `value` is a function-like expression
- *     (`FunctionExpression` / `ArrowFunctionExpression`) — class fields whose
- *     initializer is a function are methods in everything but the keyword.
- *   - Abstract / TypeScript-only declarations without a body are skipped.
+ *
+ * - `MethodDefinition` of any `kind` (`method`, `constructor`, `get`, `set`).
+ * - `PropertyDefinition` whose `value` is a function-like expression (`FunctionExpression` /
+ *   `ArrowFunctionExpression`) — class fields whose initializer is a function are methods in
+ *   everything but the keyword.
+ * - Abstract / TypeScript-only declarations without a body are skipped.
  *
  * Diagnostic format (per docs/mvp/03-technical-architecture.md):
- *   "Class 'UserService' has WMC of 34 (max: 20).
- *      Methods contributing: validate(CC=8), createUser(CC=12), ..."
+ * "Class 'UserService' has WMC of 34 (max: 20).
+ * Methods contributing: validate(CC=8), createUser(CC=12), ..."
  */
 
 import { computeCC, type FunctionNode } from '../utils/cc.js';
@@ -67,13 +68,10 @@ export const wmc = {
     const check = (node: unknown): void => {
       if (!isClassLikeNode(node)) return;
 
-      const methods = collectClassMethods<MethodInfo>(
-        node,
-        (key, computed, value) => ({
-          name: getMethodName(key, computed),
-          cc: computeCC(value as unknown as FunctionNode),
-        }),
-      );
+      const methods = collectClassMethods<MethodInfo>(node, (key, computed, value) => ({
+        name: getMethodName(key, computed),
+        cc: computeCC(value as unknown as FunctionNode),
+      }));
       if (methods.length === 0) return;
 
       let wmcValue = 0;
@@ -82,9 +80,7 @@ export const wmc = {
       if (wmcValue <= options.max) return;
 
       const className = getClassName(node) ?? '<anonymous>';
-      const methodsStr = methods
-        .map(({ name, cc }) => `${name}(CC=${cc})`)
-        .join(', ');
+      const methodsStr = methods.map(({ name, cc }) => `${name}(CC=${cc})`).join(', ');
       context.report({
         node,
         message: `Class '${className}' has WMC of ${wmcValue} (max: ${options.max}).\n  Methods contributing: ${methodsStr}`,

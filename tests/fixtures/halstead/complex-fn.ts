@@ -34,7 +34,7 @@ export function processPayment(
   if (!currency || currency.length !== 3) throw new Error('Invalid currency');
   const rate = currency === 'USD' ? 1.0 : currency === 'EUR' ? 1.1 : 0.9;
   const converted = amount * rate;
-  const fee = method === 'card' ? converted * 0.029 + 0.30 : 0;
+  const fee = method === 'card' ? converted * 0.029 + 0.3 : 0;
   const total = converted + fee;
   if (total > 10000 && method !== 'wire') throw new Error('Limit exceeded');
   return { userId, orderId, total, currency, method, timestamp: Date.now() };

@@ -1,10 +1,10 @@
 # CBO fixture — `high-cbo`
 
-| Class | Outgoing | Incoming | CBO |
-|---|---|---|---|
-| `OrderController` | 7 | 5 | **12** |
-| Each service class | 0 (or 1 internal) | 1 (from `OrderController`) | 1 |
-| Each referrer class | 1 (`OrderController`) | 0 | 1 |
+| Class               | Outgoing              | Incoming                   | CBO    |
+| ------------------- | --------------------- | -------------------------- | ------ |
+| `OrderController`   | 7                     | 5                          | **12** |
+| Each service class  | 0 (or 1 internal)     | 1 (from `OrderController`) | 1      |
+| Each referrer class | 1 (`OrderController`) | 0                          | 1      |
 
 The fixture targets `OrderController`. All other files exist only to provide
 the seven outgoing dependencies and the five incoming dependencies.

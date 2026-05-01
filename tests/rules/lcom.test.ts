@@ -125,30 +125,18 @@ describe('rules/lcom — basic behavior', () => {
   });
 
   it('does not report when class has only non-function PropertyDefinitions', () => {
-    const node = classDecl(
-      'OnlyData',
-      propertyDef('count', lit(0)),
-      propertyDef('name', lit('x')),
-    );
+    const node = classDecl('OnlyData', propertyDef('count', lit(0)), propertyDef('name', lit('x')));
     expect(runOn(node)).toEqual([]);
   });
 
   it('does not report when LCOM equals the threshold', () => {
     // Two methods sharing nothing → P=1, Q=0, LCOM=1.
-    const node = classDecl(
-      'Foo',
-      methodAccessing('a', 'x'),
-      methodAccessing('b', 'y'),
-    );
+    const node = classDecl('Foo', methodAccessing('a', 'x'), methodAccessing('b', 'y'));
     expect(runOn(node, [{ maxLcom: 1 }])).toEqual([]);
   });
 
   it('reports when LCOM exceeds the threshold', () => {
-    const node = classDecl(
-      'Foo',
-      methodAccessing('a', 'x'),
-      methodAccessing('b', 'y'),
-    );
+    const node = classDecl('Foo', methodAccessing('a', 'x'), methodAccessing('b', 'y'));
     const reports = runOn(node, [{ maxLcom: 0 }]);
     expect(reports).toHaveLength(1);
     expect(reports[0]?.message).toContain("Class 'Foo' has LCOM of 1 (max: 0)");
@@ -171,22 +159,14 @@ describe('rules/lcom — basic behavior', () => {
 
 describe('rules/lcom — defaults and options', () => {
   it('uses default maxLcom=0 when no options are provided', () => {
-    const node = classDecl(
-      'Foo',
-      methodAccessing('a', 'x'),
-      methodAccessing('b', 'y'),
-    );
+    const node = classDecl('Foo', methodAccessing('a', 'x'), methodAccessing('b', 'y'));
     const reports = runOn(node);
     expect(reports).toHaveLength(1);
     expect(reports[0]?.message).toContain('LCOM of 1 (max: 0)');
   });
 
   it('uses default maxLcom=0 when options[0] is null/non-object', () => {
-    const node = classDecl(
-      'Foo',
-      methodAccessing('a', 'x'),
-      methodAccessing('b', 'y'),
-    );
+    const node = classDecl('Foo', methodAccessing('a', 'x'), methodAccessing('b', 'y'));
     expect(runOn(node, [null])).toHaveLength(1);
     expect(runOn(node, [42])).toHaveLength(1);
     expect(runOn(node, ['nope'])).toHaveLength(1);
@@ -205,11 +185,7 @@ describe('rules/lcom — defaults and options', () => {
   });
 
   it('merges partial options with defaults', () => {
-    const node = classDecl(
-      'Foo',
-      methodAccessing('a', 'x'),
-      methodAccessing('b', 'y'),
-    );
+    const node = classDecl('Foo', methodAccessing('a', 'x'), methodAccessing('b', 'y'));
     // Empty object → falls back to default maxLcom=0.
     const reports = runOn(node, [{}]);
     expect(reports).toHaveLength(1);
@@ -217,11 +193,7 @@ describe('rules/lcom — defaults and options', () => {
   });
 
   it('attaches structured data alongside the formatted message', () => {
-    const node = classDecl(
-      'Foo',
-      methodAccessing('a', 'x'),
-      methodAccessing('b', 'y'),
-    );
+    const node = classDecl('Foo', methodAccessing('a', 'x'), methodAccessing('b', 'y'));
     const reports = runOn(node, [{ maxLcom: 0 }]);
     expect(reports).toHaveLength(1);
     expect(reports[0]?.data).toEqual({
@@ -245,9 +217,7 @@ describe('rules/lcom — fixture parity', () => {
     );
     const reports = runOn(node);
     expect(reports).toHaveLength(1);
-    expect(reports[0]?.message).toContain(
-      "Class 'MixedService' has LCOM of 3 (max: 0)",
-    );
+    expect(reports[0]?.message).toContain("Class 'MixedService' has LCOM of 3 (max: 0)");
     expect(reports[0]?.message).toContain(
       'Unrelated method pairs: (saveUser, sendWelcome), (saveUser, invalidateSession), (sendWelcome, invalidateSession)',
     );
@@ -283,11 +253,7 @@ describe('rules/lcom — pair semantics', () => {
   it('two empty-set methods count as an unrelated pair (no shared state)', () => {
     // Both methods leave `this` alone — they don't interact through state, so
     // LCOM rightly flags them.
-    const node = classDecl(
-      'Pure',
-      methodDef('a', fnExpr()),
-      methodDef('b', fnExpr()),
-    );
+    const node = classDecl('Pure', methodDef('a', fnExpr()), methodDef('b', fnExpr()));
     const reports = runOn(node);
     expect(reports).toHaveLength(1);
     expect(reports[0]?.message).toContain('LCOM of 1');
@@ -331,9 +297,7 @@ describe('rules/lcom — pair semantics', () => {
     );
     const reports = runOn(node, [{ maxLcom: 0 }]);
     expect(reports).toHaveLength(1);
-    expect(reports[0]?.message).toContain(
-      'Unrelated method pairs: (m1, m2), (m1, m3), (m2, m3)',
-    );
+    expect(reports[0]?.message).toContain('Unrelated method pairs: (m1, m2), (m1, m3), (m2, m3)');
   });
 });
 

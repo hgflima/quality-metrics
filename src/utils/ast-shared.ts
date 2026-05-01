@@ -33,8 +33,7 @@ export function isAstNode(value: unknown): value is AstNode {
 
 export function isClassLikeNode(value: unknown): value is ClassLikeNode {
   return (
-    isAstNode(value) &&
-    (value.type === 'ClassDeclaration' || value.type === 'ClassExpression')
+    isAstNode(value) && (value.type === 'ClassDeclaration' || value.type === 'ClassExpression')
   );
 }
 
@@ -63,11 +62,7 @@ export function getMethodName(key: unknown, computed: boolean): string {
   if (key.type === 'PrivateIdentifier' && typeof key['name'] === 'string') {
     return `#${key['name']}`;
   }
-  if (
-    key.type === 'Literal' ||
-    key.type === 'StringLiteral' ||
-    key.type === 'NumericLiteral'
-  ) {
+  if (key.type === 'Literal' || key.type === 'StringLiteral' || key.type === 'NumericLiteral') {
     const value = key['value'];
     if (typeof value === 'string' || typeof value === 'number') {
       return String(value);
@@ -98,10 +93,7 @@ export function collectClassMethods<T>(
   const result: T[] = [];
   for (const member of members) {
     if (!isAstNode(member)) continue;
-    if (
-      member.type !== 'MethodDefinition' &&
-      member.type !== 'PropertyDefinition'
-    ) {
+    if (member.type !== 'MethodDefinition' && member.type !== 'PropertyDefinition') {
       continue;
     }
     const value = member['value'];

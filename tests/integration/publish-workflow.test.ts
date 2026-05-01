@@ -10,8 +10,8 @@ import { describe, it, expect } from 'vitest';
  * permission, a missing `--provenance` flag, or a non-allowlisted `files`
  * entry would silently regress the supply-chain guarantees declared in
  * docs/mvp/04-security-and-performance.md §"Supply Chain":
- *   - Package published with `npm provenance` (GitHub Actions OIDC)
- *   - `package.json` `files` field explicitly allowlists only dist/configs/fixtures
+ * - Package published with `npm provenance` (GitHub Actions OIDC)
+ * - `package.json` `files` field explicitly allowlists only dist/configs/fixtures
  *
  * We parse no YAML here (no parser dep): the workflow file is small and
  * deterministic, so regex-anchored assertions are sufficient.

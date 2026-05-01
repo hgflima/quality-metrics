@@ -124,19 +124,13 @@ describe('rules/wmc — basic behavior', () => {
 
   it('does not report when WMC equals the threshold', () => {
     // Single method with CC=5 (4 ifs).
-    const method = methodDef(
-      'm',
-      fnExpr(ifStmt(), ifStmt(), ifStmt(), ifStmt()),
-    );
+    const method = methodDef('m', fnExpr(ifStmt(), ifStmt(), ifStmt(), ifStmt()));
     const node = classDecl('Foo', method);
     expect(runOn(node, [{ max: 5 }])).toEqual([]);
   });
 
   it('reports when WMC exceeds the threshold', () => {
-    const method = methodDef(
-      'm',
-      fnExpr(ifStmt(), ifStmt(), ifStmt(), ifStmt()),
-    );
+    const method = methodDef('m', fnExpr(ifStmt(), ifStmt(), ifStmt(), ifStmt()));
     const node = classDecl('Foo', method);
     const reports = runOn(node, [{ max: 4 }]);
     expect(reports).toHaveLength(1);
@@ -148,9 +142,7 @@ describe('rules/wmc — basic behavior', () => {
 describe('rules/wmc — defaults and options', () => {
   it('uses default max=20 when no options are provided', () => {
     // 21 methods, each CC=1 → WMC=21
-    const members = Array.from({ length: 21 }, (_, i) =>
-      methodDef(`m${i}`, fnExpr()),
-    );
+    const members = Array.from({ length: 21 }, (_, i) => methodDef(`m${i}`, fnExpr()));
     const node = classDecl('TooBig', ...members);
     const reports = runOn(node);
     expect(reports).toHaveLength(1);
@@ -158,18 +150,14 @@ describe('rules/wmc — defaults and options', () => {
   });
 
   it('uses default max=20 when options[0] is malformed', () => {
-    const members = Array.from({ length: 21 }, (_, i) =>
-      methodDef(`m${i}`, fnExpr()),
-    );
+    const members = Array.from({ length: 21 }, (_, i) => methodDef(`m${i}`, fnExpr()));
     const node = classDecl('TooBig', ...members);
     expect(runOn(node, [null])).toHaveLength(1);
     expect(runOn(node, [42])).toHaveLength(1);
   });
 
   it('respects custom max from options', () => {
-    const members = Array.from({ length: 5 }, (_, i) =>
-      methodDef(`m${i}`, fnExpr()),
-    );
+    const members = Array.from({ length: 5 }, (_, i) => methodDef(`m${i}`, fnExpr()));
     const node = classDecl('Mid', ...members);
     expect(runOn(node, [{ max: 10 }])).toEqual([]);
     expect(runOn(node, [{ max: 4 }])).toHaveLength(1);
@@ -204,9 +192,7 @@ describe('rules/wmc — fixture parity', () => {
     const reports = runOn(calculator, [{ max: 3 }]);
     expect(reports).toHaveLength(1);
     expect(reports[0]?.message).toContain('WMC of 4 (max: 3)');
-    expect(reports[0]?.message).toContain(
-      'add(CC=1), sub(CC=1), mul(CC=1), div(CC=1)',
-    );
+    expect(reports[0]?.message).toContain('add(CC=1), sub(CC=1), mul(CC=1), div(CC=1)');
   });
 
   it('high-wmc fixture: per-method CCs 3+5+4+2+3 → WMC=17, reports at max=10', () => {
@@ -233,21 +219,11 @@ describe('rules/wmc — fixture parity', () => {
         ],
       }),
     );
-    const update = methodDef(
-      'update',
-      fnExpr(ifStmt(), ifStmt(), ifStmt()),
-    );
+    const update = methodDef('update', fnExpr(ifStmt(), ifStmt(), ifStmt()));
     const del = methodDef('delete', fnExpr(ifStmt()));
     const list = methodDef('list', fnExpr(ifStmt(), ifStmt()));
 
-    const orderService = classDecl(
-      'OrderService',
-      validate,
-      create,
-      update,
-      del,
-      list,
-    );
+    const orderService = classDecl('OrderService', validate, create, update, del, list);
 
     // At default max=20, WMC=17 < 20 → no report.
     expect(runOn(orderService)).toEqual([]);
@@ -255,9 +231,7 @@ describe('rules/wmc — fixture parity', () => {
     // At max=10, WMC=17 → reports.
     const reports = runOn(orderService, [{ max: 10 }]);
     expect(reports).toHaveLength(1);
-    expect(reports[0]?.message).toContain(
-      "Class 'OrderService' has WMC of 17 (max: 10)",
-    );
+    expect(reports[0]?.message).toContain("Class 'OrderService' has WMC of 17 (max: 10)");
     expect(reports[0]?.message).toContain('validate(CC=3)');
     expect(reports[0]?.message).toContain('create(CC=5)');
     expect(reports[0]?.message).toContain('update(CC=4)');
@@ -307,10 +281,7 @@ describe('rules/wmc — method shapes', () => {
 
   it('counts arrow-valued PropertyDefinition class fields', () => {
     // class Foo { handle = () => { if (x) {} } }
-    const field = propertyDef(
-      'handle',
-      arrow(block(ifStmt())),
-    );
+    const field = propertyDef('handle', arrow(block(ifStmt())));
     const node = classDecl('Foo', field);
     const reports = runOn(node, [{ max: 1 }]);
     expect(reports).toHaveLength(1);
@@ -421,21 +392,14 @@ describe('rules/wmc — class node shapes', () => {
 
   it('does not double-count CC from nested functions inside methods', () => {
     // Outer method has 1 if (CC=2); the nested arrow has 5 ifs but is skipped.
-    const inner = arrow(
-      block(ifStmt(), ifStmt(), ifStmt(), ifStmt(), ifStmt()),
-    );
+    const inner = arrow(block(ifStmt(), ifStmt(), ifStmt(), ifStmt(), ifStmt()));
     const outer = methodDef(
       'm',
-      fnExpr(
-        ifStmt(),
-        {
-          type: 'VariableDeclaration',
-          kind: 'const',
-          declarations: [
-            { type: 'VariableDeclarator', id: id('cb'), init: inner },
-          ],
-        },
-      ),
+      fnExpr(ifStmt(), {
+        type: 'VariableDeclaration',
+        kind: 'const',
+        declarations: [{ type: 'VariableDeclarator', id: id('cb'), init: inner }],
+      }),
     );
     const node = classDecl('Foo', outer);
     const reports = runOn(node, [{ max: 1 }]);

@@ -3,10 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { cbo } from '../../src/rules/cbo';
-import {
-  resetProjectSingleton,
-  setTsMorphLoader,
-} from '../../src/project-singleton';
+import { resetProjectSingleton, setTsMorphLoader } from '../../src/project-singleton';
 import type { ReportDescriptor, RuleContext } from '../../src/types';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -52,11 +49,7 @@ function makeContext(
   return { context, reports };
 }
 
-function runOn(
-  node: unknown,
-  options: unknown[],
-  filename: string,
-): CapturedReport[] {
+function runOn(node: unknown, options: unknown[], filename: string): CapturedReport[] {
   const { context, reports } = makeContext(options, filename);
   const visitors = cbo.create(context);
   if (!node || typeof node !== 'object') return reports;
@@ -127,10 +120,7 @@ describe('rules/cbo — meta & schema', () => {
       additionalProperties: boolean;
     };
     expect(schema.type).toBe('object');
-    expect(Object.keys(schema.properties).sort()).toEqual([
-      'max',
-      'tsconfigPath',
-    ]);
+    expect(Object.keys(schema.properties).sort()).toEqual(['max', 'tsconfigPath']);
     expect(schema.additionalProperties).toBe(false);
   });
 
@@ -224,11 +214,7 @@ describe('rules/cbo — options handling', () => {
   it('respects partial options — max specified, tsconfigPath missing', () => {
     // Without tsconfigPath the default ts-morph project has no source files
     // loaded → file lookup fails → silent.
-    const reports = runOn(
-      classDecl('OrderController'),
-      [{ max: 0 }],
-      ORDER_CONTROLLER_PATH,
-    );
+    const reports = runOn(classDecl('OrderController'), [{ max: 0 }], ORDER_CONTROLLER_PATH);
     expect(reports).toEqual([]);
   });
 });
@@ -464,8 +450,6 @@ describe('rules/cbo — visitor wiring', () => {
     expect(typeof visitors.ClassDeclaration).toBe('function');
     expect(typeof visitors.ClassExpression).toBe('function');
     // Calling them must not throw.
-    expect(() =>
-      visitors.ClassDeclaration?.(classDecl('Anything')),
-    ).not.toThrow();
+    expect(() => visitors.ClassDeclaration?.(classDecl('Anything'))).not.toThrow();
   });
 });

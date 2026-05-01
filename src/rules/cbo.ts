@@ -6,41 +6,41 @@
  * once when the sum exceeds the configured `max`.
  *
  * Definition (Chidamber & Kemerer, 1994), bidirectional flavor used here:
- *   CBO(C) = |outgoing(C)| + |incoming(C)|
- *     outgoing(C) = { C' : C uses methods or instance variables of C' }
- *     incoming(C) = { C' : C' uses methods or instance variables of C }
+ * CBO(C) = |outgoing(C)| + |incoming(C)|
+ * outgoing(C) = { C' : C uses methods or instance variables of C' }
+ * incoming(C) = { C' : C' uses methods or instance variables of C }
  *
  * What counts as outgoing:
- *   - Identifier references inside class members whose symbol resolves to a
- *     `ClassDeclaration` in another file.
+ * - Identifier references inside class members whose symbol resolves to a
+ * `ClassDeclaration` in another file.
  *
  * What counts as incoming:
- *   - Any reference to this class name from inside another class's members
- *     (constructor, methods, getters, setters, properties), regardless of
- *     whether the referring class lives in the same or a different file.
+ * - Any reference to this class name from inside another class's members
+ * (constructor, methods, getters, setters, properties), regardless of
+ * whether the referring class lives in the same or a different file.
  *
  * What does NOT count (in either direction):
- *   - Inheritance edges (`extends` / `implements`) — per C&K. Outgoing avoids
- *     them by iterating `class.getMembers()` (which excludes heritage clauses);
- *     incoming avoids them by skipping any reference whose ancestor chain
- *     passes through a `HeritageClause`.
- *   - Self-references (the class referring to itself).
- *   - Declarations from `.d.ts` files (built-in types, ambient libs).
- *   - References at module/file level outside any class body (e.g. the bare
- *     `import { X }` statement, top-level type aliases, etc.).
+ * - Inheritance edges (`extends` / `implements`) — per C&K. Outgoing avoids
+ * them by iterating `class.getMembers()` (which excludes heritage clauses);
+ * incoming avoids them by skipping any reference whose ancestor chain
+ * passes through a `HeritageClause`.
+ * - Self-references (the class referring to itself).
+ * - Declarations from `.d.ts` files (built-in types, ambient libs).
+ * - References at module/file level outside any class body (e.g. the bare
+ * `import { X }` statement, top-level type aliases, etc.).
  *
  * Diagnostic format (per docs/mvp/03-technical-architecture.md):
- *   "Class 'OrderController' has CBO of 12 (max: 10).
- *      Outgoing (7): OrderService, PaymentService, ...
- *      Incoming (5): AdminPanel, CheckoutFlow, ..."
+ * "Class 'OrderController' has CBO of 12 (max: 10).
+ * Outgoing (7): OrderService, PaymentService, ...
+ * Incoming (5): AdminPanel, CheckoutFlow, ..."
  *
  * Graceful degradation:
- *   - When `ts-morph` is unavailable (peer dep absent or Project construction
- *     failed), `getProjectSingleton().isAvailable` is false; the rule returns
- *     an empty visitor object so no diagnostics are produced.
- *   - When the analyzed file or the named class is not in the ts-morph project
- *     (e.g. tsconfigPath not configured, or class is anonymous), the visitor
- *     silently skips that node.
+ * - When `ts-morph` is unavailable (peer dep absent or Project construction
+ * failed), `getProjectSingleton().isAvailable` is false; the rule returns
+ * an empty visitor object so no diagnostics are produced.
+ * - When the analyzed file or the named class is not in the ts-morph project
+ * (e.g. tsconfigPath not configured, or class is anonymous), the visitor
+ * silently skips that node.
  */
 
 import { createDeepClassVisitor } from '../utils/ts-morph-rule.js';
@@ -96,8 +96,8 @@ function collectFromIdentifier(
  * Find every class (in any source file loaded into the ts-morph Project) whose
  * body references `cls`. Uses TypeScript's "Find All References" service via
  * `findReferencesAsNodes()`, then for each reference walks up the AST:
- *   - if the chain crosses a `HeritageClause` → skip (inheritance excluded)
- *   - else attribute the reference to the innermost containing class
+ * - if the chain crosses a `HeritageClause` → skip (inheritance excluded)
+ * - else attribute the reference to the innermost containing class
  * Self-references (declaration site, references inside `cls` itself) drop out
  * via the `containingClass === cls` guard.
  */
@@ -125,9 +125,7 @@ function collectIncomingClasses(cls: TsMorphClassDeclaration): Set<string> {
  * C&K). Also returns `null` if the reference is not contained in any class
  * (e.g. top-level imports, type aliases, function declarations).
  */
-function findContainingClassExcludingHeritage(
-  node: TsMorphNode,
-): TsMorphClassDeclaration | null {
+function findContainingClassExcludingHeritage(node: TsMorphNode): TsMorphClassDeclaration | null {
   let current: TsMorphNode | undefined = node.getParent();
   while (current) {
     const kind = current.getKindName();

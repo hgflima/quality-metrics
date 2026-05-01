@@ -30,13 +30,7 @@ describe('default export', () => {
 
 describe('rule registry', () => {
   it('registers exactly the five rules (fast-tier + deep-tier)', () => {
-    expect(Object.keys(rules).sort()).toEqual([
-      'cbo',
-      'dit',
-      'halstead',
-      'lcom',
-      'wmc',
-    ]);
+    expect(Object.keys(rules).sort()).toEqual(['cbo', 'dit', 'halstead', 'lcom', 'wmc']);
   });
 
   it('registers the same rule objects exported from the rules modules', () => {

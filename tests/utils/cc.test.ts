@@ -178,9 +178,7 @@ describe('computeCC', () => {
         fn({
           type: 'VariableDeclaration',
           kind: 'const',
-          declarations: [
-            { type: 'VariableDeclarator', id: id('inner'), init: innerFn },
-          ],
+          declarations: [{ type: 'VariableDeclarator', id: id('inner'), init: innerFn }],
         }),
       ),
     ).toBe(1);

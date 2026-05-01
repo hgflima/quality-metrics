@@ -13,7 +13,7 @@ import { rules } from '../../src/index';
  * disable rules on consumer projects.
  *
  * Source of truth for the expected shape:
- *   docs/mvp/03-technical-architecture.md §"oxlint.deep.json"
+ * docs/mvp/03-technical-architecture.md §"oxlint.deep.json"
  */
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -52,10 +52,7 @@ describe('configs/oxlint.deep.json — rules registry', () => {
   it('contains exactly the two deep-tier rules', () => {
     const cfg = loadConfig();
     const ruleKeys = Object.keys(cfg.rules).sort();
-    expect(ruleKeys).toEqual([
-      'quality-metrics/cbo',
-      'quality-metrics/dit',
-    ]);
+    expect(ruleKeys).toEqual(['quality-metrics/cbo', 'quality-metrics/dit']);
   });
 
   it('does not include any fast-tier rules (wmc, halstead, lcom) — that is the fast preset', () => {

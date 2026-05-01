@@ -9,16 +9,15 @@
  * Consumed by `rules/halstead.ts` (Halstead Volume / Effort thresholds).
  *
  * The traversal:
- *   - Skips TypeScript type annotations (`typeAnnotation`, `returnType`,
- *     `typeParameters`, `superTypeParameters`) and `TS*` AST nodes — Halstead
- *     is computed on the JavaScript-emit token stream.
- *   - Stops at NESTED function-like boundaries. The function-like node passed
- *     in (or the first encountered while descending) IS measured; any
- *     function declared INSIDE it gets its own measurement and is not
- *     traversed here.
- *   - Counts object-literal shorthand properties (`{ foo }`) as a single
- *     operand to avoid double-counting key/value (which share the same
- *     Identifier node in ESTree).
+ *
+ * - Skips TypeScript type annotations (`typeAnnotation`, `returnType`, `typeParameters`,
+ *   `superTypeParameters`) and `TS*` AST nodes — Halstead is computed on the JavaScript-emit token
+ *   stream.
+ * - Stops at NESTED function-like boundaries. The function-like node passed in (or the first
+ *   encountered while descending) IS measured; any function declared INSIDE it gets its own
+ *   measurement and is not traversed here.
+ * - Counts object-literal shorthand properties (`{ foo }`) as a single operand to avoid
+ *   double-counting key/value (which share the same Identifier node in ESTree).
  */
 
 import type { HalsteadMetrics } from '../types.js';
@@ -78,8 +77,7 @@ export function computeHalstead(node: unknown): HalsteadMetrics {
   const operands = new Map<string, number>();
 
   const addOperator = (token: string): void => increment(operators, token);
-  const addIdentifier = (name: string): void =>
-    increment(operands, `id:${name}`);
+  const addIdentifier = (name: string): void => increment(operands, `id:${name}`);
   const addLiteral = (kind: string, value: string): void =>
     increment(operands, `lit:${kind}:${value}`);
 

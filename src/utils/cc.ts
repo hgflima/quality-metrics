@@ -3,13 +3,13 @@
  *
  * Counts decision points within a function body and returns count + 1.
  * Decision points (per McCabe, aligned with ESLint's `complexity` rule):
- *   - IfStatement
- *   - ForStatement / ForInStatement / ForOfStatement
- *   - WhileStatement / DoWhileStatement
- *   - CatchClause
- *   - ConditionalExpression (ternary)
- *   - SwitchCase with a non-null `test` (i.e., not `default`)
- *   - LogicalExpression with operator `&&`, `||`, or `??`
+ * - IfStatement
+ * - ForStatement / ForInStatement / ForOfStatement
+ * - WhileStatement / DoWhileStatement
+ * - CatchClause
+ * - ConditionalExpression (ternary)
+ * - SwitchCase with a non-null `test` (i.e., not `default`)
+ * - LogicalExpression with operator `&&`, `||`, or `??`
  *
  * Nested function/arrow bodies are NOT traversed — they have their own CC.
  *

@@ -405,17 +405,11 @@ describe('rules/halstead — visitor wiring', () => {
     // When the rule visits the outer, the helper stops at the nested boundary,
     // so the outer Volume/Effort comes only from the outer skeleton.
     const inner = highEffortFn('inner');
-    const outer = fnDecl(
-      'outer',
-      [],
-      {
-        type: 'VariableDeclaration',
-        kind: 'const',
-        declarations: [
-          { type: 'VariableDeclarator', id: id('cb'), init: inner },
-        ],
-      },
-    );
+    const outer = fnDecl('outer', [], {
+      type: 'VariableDeclaration',
+      kind: 'const',
+      declarations: [{ type: 'VariableDeclarator', id: id('cb'), init: inner }],
+    });
     // Outer should NOT exceed the default thresholds — its own tokens are
     // tiny; the inner is skipped by the helper boundary.
     expect(runOn(outer)).toEqual([]);

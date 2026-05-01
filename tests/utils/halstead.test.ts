@@ -106,9 +106,7 @@ describe('computeHalstead — arrow-fn fixture (export const add = (a, b) => a +
     const node = {
       type: 'VariableDeclaration',
       kind: 'const',
-      declarations: [
-        { type: 'VariableDeclarator', id: id('add'), init: arrow },
-      ],
+      declarations: [{ type: 'VariableDeclarator', id: id('add'), init: arrow }],
     };
     const m = computeHalstead(node);
     // Operators: const, =, =>, +  (4 distinct, 4 occurrences)
@@ -135,8 +133,9 @@ describe('computeHalstead — operator classification', () => {
       }),
     );
     // function, if, else
-    expect(Object.fromEntries([...new Set(['function', 'if', 'else'])].map((k) => [k, true])))
-      .toBeDefined();
+    expect(
+      Object.fromEntries([...new Set(['function', 'if', 'else'])].map((k) => [k, true])),
+    ).toBeDefined();
     expect(m.eta1).toBe(3);
     expect(m.N1).toBe(3);
   });
@@ -350,17 +349,15 @@ describe('computeHalstead — operator classification', () => {
 describe('computeHalstead — operand classification', () => {
   it('counts identifiers per occurrence and per distinct name', () => {
     const m = computeHalstead(
-      fn(
-        {
-          type: 'ExpressionStatement',
-          expression: {
-            type: 'BinaryExpression',
-            operator: '+',
-            left: id('a'),
-            right: id('a'),
-          },
+      fn({
+        type: 'ExpressionStatement',
+        expression: {
+          type: 'BinaryExpression',
+          operator: '+',
+          left: id('a'),
+          right: id('a'),
         },
-      ),
+      }),
     );
     // operands: a×2 → eta2=1, N2=2
     expect(m.eta2).toBe(1);
@@ -517,9 +514,7 @@ describe('computeHalstead — function-boundary semantics', () => {
       fn({
         type: 'VariableDeclaration',
         kind: 'const',
-        declarations: [
-          { type: 'VariableDeclarator', id: id('inner'), init: innerArrow },
-        ],
+        declarations: [{ type: 'VariableDeclarator', id: id('inner'), init: innerArrow }],
       }),
     );
     // Outer operators: function, const, =. Inner arrow is skipped, so `=>`

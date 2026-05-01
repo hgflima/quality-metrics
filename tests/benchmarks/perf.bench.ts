@@ -5,8 +5,8 @@
  * representative 500-file TypeScript project. The architectural targets from
  * `docs/mvp/04-security-and-performance.md` §"Execution Time Targets":
  *
- *   - Fast tier (WMC + Halstead + LCOM):              < 1s on 500 files
- *   - Deep tier (CBO + DIT, after createOnce warmup): < 10s on 500 files
+ * - Fast tier (WMC + Halstead + LCOM): < 1s on 500 files
+ * - Deep tier (CBO + DIT, after createOnce warmup): < 10s on 500 files
  *
  * Note: this `.bench.ts` file is informational — it surfaces timings but does
  * not fail the build on regressions. The hard CI gate lives in
@@ -70,10 +70,7 @@ describe('fast tier — 500 files', () => {
         ...FAST_CONFIG_BASE,
         rules: {
           'quality-metrics/wmc': ['error', { max: 20 }],
-          'quality-metrics/halstead': [
-            'warn',
-            { maxVolume: 1000, maxEffort: 400 },
-          ],
+          'quality-metrics/halstead': ['warn', { maxVolume: 1000, maxEffort: 400 }],
           'quality-metrics/lcom': ['warn', { maxLcom: 2 }],
         },
       } as never;
@@ -93,14 +90,8 @@ describe('deep tier — 500 files', () => {
       const config = {
         ...FAST_CONFIG_BASE,
         rules: {
-          'quality-metrics/cbo': [
-            'error',
-            { max: 10, tsconfigPath: fixtures.tsconfigPath },
-          ],
-          'quality-metrics/dit': [
-            'warn',
-            { max: 5, tsconfigPath: fixtures.tsconfigPath },
-          ],
+          'quality-metrics/cbo': ['error', { max: 10, tsconfigPath: fixtures.tsconfigPath }],
+          'quality-metrics/dit': ['warn', { max: 5, tsconfigPath: fixtures.tsconfigPath }],
         },
       } as never;
       for (const f of fixtures.files) {
