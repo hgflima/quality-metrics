@@ -7,7 +7,7 @@ Run `./loop.sh plan` (or `./loop-docker.sh plan`) to populate it.
 ## Priority 1: Batch 0 — Contracts & Project Scaffold
 
 - [x] **TASK-002** — Scaffold package structure (`package.json`, `tsconfig.json`, `tsup.config.ts`, `vitest.config.ts`, `src/index.ts`, directory tree, `.gitignore`). Validated: `npm install` ✅, `tsup` build produces dual ESM+CJS ✅, `vitest run` ✅, `tsc --noEmit` ✅.
-- [ ] **TASK-001** — Define TypeScript contracts in `src/types.ts` (interfaces from `docs/mvp/03-technical-architecture.md`)
+- [x] **TASK-001** — Define TypeScript contracts in `src/types.ts` (interfaces from `docs/mvp/03-technical-architecture.md`). All 10 contracts (`ReportDescriptor`, `RuleContext`, `WmcOptions`, `HalsteadOptions`, `LcomOptions`, `CboOptions`, `DitOptions`, `HalsteadMetrics`, `ClassMethodAttributes`, `ProjectSingleton`) defined and re-exported via `src/index.ts`. Validated: `tsc --noEmit` ✅, `tsup` build (ESM+CJS+dts) ✅, `vitest run` ✅.
 - [ ] **TASK-003** — Define CC helper interface + stub (`src/utils/cc.ts`) — depends on TASK-001
 - [ ] **TASK-004** — Create test fixture files with hand-computed reference values — depends on TASK-001
 
@@ -50,5 +50,6 @@ Run `./loop.sh plan` (or `./loop-docker.sh plan`) to populate it.
 ## Notes / Discoveries
 
 - `vitest.config.ts` uses `passWithNoTests: true` so `vitest run` exits 0 before any tests exist (satisfies TASK-002 AC).
-- `tsconfig.json` excludes `tests/` from compilation (test files compiled by Vitest's own pipeline). Once Lane D ships, may need a `tsconfig.test.json` for stricter test type-checking.
+- `tsconfig.json` excludes `tests/` from compilation (test files compiled by Vitest's own pipeline). Once Lane D ships, may need a `tsconfig.test.json` for stricter type-checking.
 - `node_modules`, `dist`, `package-lock.json` to be added/committed appropriately (lock file checked in; `node_modules`, `dist` ignored).
+- TASK-001: `ts-morph` added as `devDependency` so `import('ts-morph').Project` in `ProjectSingleton` type-checks. It remains an *optional* runtime peer dependency (deep-tier rules only). `ReportDescriptor` was added to the contracts (not in the original architecture doc) to give `RuleContext.report()` a typed argument matching the OXLint/ESLint diagnostic shape.
