@@ -43,49 +43,15 @@
  *     silently skips that node.
  */
 
-import { getProjectSingleton } from '../project-singleton.js';
+import { createDeepClassVisitor } from '../utils/ts-morph-rule.js';
 import type { CboOptions, RuleContext } from '../types.js';
 import type {
   ClassDeclaration as TsMorphClassDeclaration,
   Identifier,
   Node as TsMorphNode,
-  Project,
 } from 'ts-morph';
 
 const DEFAULT_MAX = 10;
-
-interface AstNode {
-  type: string;
-  [key: string]: unknown;
-}
-
-interface ClassLikeNode extends AstNode {
-  type: 'ClassDeclaration' | 'ClassExpression';
-}
-
-function isAstNode(value: unknown): value is AstNode {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { type?: unknown }).type === 'string'
-  );
-}
-
-function getClassName(node: ClassLikeNode): string | null {
-  const id = node['id'];
-  if (isAstNode(id) && typeof id['name'] === 'string') return id['name'];
-  return null;
-}
-
-function findTsMorphClass(
-  project: Project,
-  filePath: string,
-  className: string,
-): TsMorphClassDeclaration | null {
-  const sf = project.getSourceFile(filePath);
-  if (!sf) return null;
-  return sf.getClass(className) ?? null;
-}
 
 /**
  * Walk every member of `cls` (constructor, methods, getters, setters,
@@ -174,10 +140,6 @@ function findContainingClassExcludingHeritage(
   return null;
 }
 
-function formatList(values: string[]): string {
-  return values.join(', ');
-}
-
 export const cbo = {
   meta: {
     type: 'suggestion' as const,
@@ -202,79 +164,38 @@ export const cbo = {
   },
   create(context: RuleContext) {
     const userOptions = context.options[0];
-    const merged: Partial<CboOptions> =
+    const options: CboOptions =
       userOptions != null && typeof userOptions === 'object'
-        ? (userOptions as Partial<CboOptions>)
-        : {};
-    const options: CboOptions = {
-      max: typeof merged.max === 'number' ? merged.max : DEFAULT_MAX,
-      tsconfigPath: merged.tsconfigPath,
-    };
+        ? { max: DEFAULT_MAX, ...(userOptions as Partial<CboOptions>) }
+        : { max: DEFAULT_MAX };
 
-    const singleton = getProjectSingleton(options.tsconfigPath);
-    if (!singleton.isAvailable) {
-      return {
-        ClassDeclaration: () => {},
-        ClassExpression: () => {},
-      };
-    }
+    return createDeepClassVisitor(
+      context,
+      options.tsconfigPath,
+      ({ classNode, className, tsmClass }) => {
+        const outgoing = collectOutgoingClasses(tsmClass);
+        const incoming = collectIncomingClasses(tsmClass);
+        const cboValue = outgoing.size + incoming.size;
+        if (cboValue <= options.max) return;
 
-    const project = singleton.project;
-    // ESLint v9+ exposes `context.filename` (property); legacy v8 exposes
-    // `getFilename()`. OXLint matches the v9+ shape. Read both so this rule
-    // works under any host runtime — see RuleContext in src/types.ts.
-    const filename = context.filename ?? context.getFilename?.() ?? '';
-    if (!filename) {
-      return {
-        ClassDeclaration: () => {},
-        ClassExpression: () => {},
-      };
-    }
+        const outgoingStr = [...outgoing].sort().join(', ');
+        const incomingStr = [...incoming].sort().join(', ');
 
-    const check = (node: unknown): void => {
-      if (!isAstNode(node)) return;
-      if (node.type !== 'ClassDeclaration' && node.type !== 'ClassExpression')
-        return;
-
-      const classNode = node as ClassLikeNode;
-      const className = getClassName(classNode);
-      if (!className) return;
-
-      const tsmClass = findTsMorphClass(project, filename, className);
-      if (!tsmClass) return;
-
-      const outgoing = collectOutgoingClasses(tsmClass);
-      const incoming = collectIncomingClasses(tsmClass);
-      const outgoingCount = outgoing.size;
-      const incomingCount = incoming.size;
-      const cboValue = outgoingCount + incomingCount;
-
-      if (cboValue <= options.max) return;
-
-      const outgoingList = [...outgoing].sort();
-      const incomingList = [...incoming].sort();
-      const outgoingStr = formatList(outgoingList);
-      const incomingStr = formatList(incomingList);
-
-      context.report({
-        node: classNode,
-        message: `Class '${className}' has CBO of ${cboValue} (max: ${options.max}).\n  Outgoing (${outgoingCount}): ${outgoingStr}\n  Incoming (${incomingCount}): ${incomingStr}`,
-        data: {
-          className,
-          cbo: cboValue,
-          max: options.max,
-          outgoingCount,
-          outgoing: outgoingStr,
-          incomingCount,
-          incoming: incomingStr,
-        },
-      });
-    };
-
-    return {
-      ClassDeclaration: check,
-      ClassExpression: check,
-    };
+        context.report({
+          node: classNode,
+          message: `Class '${className}' has CBO of ${cboValue} (max: ${options.max}).\n  Outgoing (${outgoing.size}): ${outgoingStr}\n  Incoming (${incoming.size}): ${incomingStr}`,
+          data: {
+            className,
+            cbo: cboValue,
+            max: options.max,
+            outgoingCount: outgoing.size,
+            outgoing: outgoingStr,
+            incomingCount: incoming.size,
+            incoming: incomingStr,
+          },
+        });
+      },
+    );
   },
 };
 

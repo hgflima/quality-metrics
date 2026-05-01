@@ -37,99 +37,19 @@ import {
   extractThisAccesses,
   type FunctionLikeNode,
 } from '../utils/this-access.js';
+import {
+  collectClassMethods,
+  getClassName,
+  getMethodName,
+  isClassLikeNode,
+} from '../utils/ast-shared.js';
 import type { LcomOptions, RuleContext } from '../types.js';
 
 const DEFAULT_MAX_LCOM = 0;
 
-interface AstNode {
-  type: string;
-  [key: string]: unknown;
-}
-
-interface ClassLikeNode extends AstNode {
-  type: 'ClassDeclaration' | 'ClassExpression';
-}
-
-const FUNCTION_LIKE_TYPES: ReadonlySet<string> = new Set([
-  'FunctionExpression',
-  'ArrowFunctionExpression',
-  'FunctionDeclaration',
-]);
-
-function isAstNode(value: unknown): value is AstNode {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { type?: unknown }).type === 'string'
-  );
-}
-
-function getMethodName(key: unknown, computed: boolean): string {
-  if (!isAstNode(key)) return '<unknown>';
-  if (key.type === 'Identifier' && typeof key['name'] === 'string') {
-    return key['name'];
-  }
-  if (key.type === 'PrivateIdentifier' && typeof key['name'] === 'string') {
-    return `#${key['name']}`;
-  }
-  if (
-    key.type === 'Literal' ||
-    key.type === 'StringLiteral' ||
-    key.type === 'NumericLiteral'
-  ) {
-    const value = key['value'];
-    if (typeof value === 'string' || typeof value === 'number') {
-      return String(value);
-    }
-  }
-  return computed ? '<computed>' : '<unknown>';
-}
-
-function getClassName(node: ClassLikeNode): string {
-  const id = node['id'];
-  if (isAstNode(id) && typeof id['name'] === 'string') return id['name'];
-  return '<anonymous>';
-}
-
 interface MethodAttrs {
   name: string;
   accessed: Set<string>;
-}
-
-function collectMethods(node: ClassLikeNode): MethodAttrs[] {
-  const body = node['body'];
-  if (!isAstNode(body)) return [];
-  const members = body['body'];
-  if (!Array.isArray(members)) return [];
-
-  const methods: MethodAttrs[] = [];
-  for (const member of members) {
-    if (!isAstNode(member)) continue;
-
-    const computed = Boolean(member['computed']);
-
-    if (member.type === 'MethodDefinition') {
-      const value = member['value'];
-      if (!isAstNode(value)) continue;
-      if (!FUNCTION_LIKE_TYPES.has(value.type)) continue;
-      methods.push({
-        name: getMethodName(member['key'], computed),
-        accessed: extractThisAccesses(value as unknown as FunctionLikeNode),
-      });
-      continue;
-    }
-
-    if (member.type === 'PropertyDefinition') {
-      const value = member['value'];
-      if (!isAstNode(value)) continue;
-      if (!FUNCTION_LIKE_TYPES.has(value.type)) continue;
-      methods.push({
-        name: getMethodName(member['key'], computed),
-        accessed: extractThisAccesses(value as unknown as FunctionLikeNode),
-      });
-    }
-  }
-  return methods;
 }
 
 function intersects(a: Set<string>, b: Set<string>): boolean {
@@ -137,10 +57,6 @@ function intersects(a: Set<string>, b: Set<string>): boolean {
   const [small, big] = a.size <= b.size ? [a, b] : [b, a];
   for (const x of small) if (big.has(x)) return true;
   return false;
-}
-
-function formatPairs(pairs: Array<readonly [string, string]>): string {
-  return pairs.map(([a, b]) => `(${a}, ${b})`).join(', ');
 }
 
 export const lcom = {
@@ -172,13 +88,15 @@ export const lcom = {
         : { maxLcom: DEFAULT_MAX_LCOM };
 
     const check = (node: unknown): void => {
-      if (!isAstNode(node)) return;
-      if (node.type !== 'ClassDeclaration' && node.type !== 'ClassExpression') {
-        return;
-      }
+      if (!isClassLikeNode(node)) return;
 
-      const classNode = node as ClassLikeNode;
-      const methods = collectMethods(classNode);
+      const methods = collectClassMethods<MethodAttrs>(
+        node,
+        (key, computed, value) => ({
+          name: getMethodName(key, computed),
+          accessed: extractThisAccesses(value as unknown as FunctionLikeNode),
+        }),
+      );
       // Need at least 2 methods to form a single pair; with fewer, P=Q=0 and
       // LCOM=0 by definition (covers the single-method fixture).
       if (methods.length < 2) return;
@@ -202,10 +120,10 @@ export const lcom = {
       const lcomValue = Math.max(P - Q, 0);
       if (lcomValue <= options.maxLcom) return;
 
-      const className = getClassName(classNode);
-      const pairsStr = formatPairs(unrelated);
+      const className = getClassName(node) ?? '<anonymous>';
+      const pairsStr = unrelated.map(([a, b]) => `(${a}, ${b})`).join(', ');
       context.report({
-        node: classNode,
+        node,
         message: `Class '${className}' has LCOM of ${lcomValue} (max: ${options.maxLcom}).\n  Unrelated method pairs: ${pairsStr}`,
         data: {
           className,

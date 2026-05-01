@@ -23,40 +23,15 @@
  */
 
 import { computeHalstead } from '../utils/halstead.js';
+import {
+  getMethodName,
+  isAstNode,
+  type AstNode,
+} from '../utils/ast-shared.js';
 import type { HalsteadOptions, RuleContext } from '../types.js';
 
 const DEFAULT_MAX_VOLUME = 1000;
 const DEFAULT_MAX_EFFORT = 400;
-
-interface AstNode {
-  type: string;
-  [key: string]: unknown;
-}
-
-function isAstNode(value: unknown): value is AstNode {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { type?: unknown }).type === 'string'
-  );
-}
-
-function getMemberName(key: unknown, computed: boolean): string {
-  if (!isAstNode(key)) return '<unknown>';
-  if (key.type === 'Identifier' && typeof key['name'] === 'string') {
-    return key['name'];
-  }
-  if (key.type === 'PrivateIdentifier' && typeof key['name'] === 'string') {
-    return `#${key['name']}`;
-  }
-  if (key.type === 'Literal' || key.type === 'StringLiteral' || key.type === 'NumericLiteral') {
-    const value = key['value'];
-    if (typeof value === 'string' || typeof value === 'number') {
-      return String(value);
-    }
-  }
-  return computed ? '<computed>' : '<unknown>';
-}
 
 /**
  * Resolve a human-readable name for a function-like node.
@@ -118,7 +93,7 @@ function getFunctionName(node: AstNode): string {
     case 'PropertyDefinition':
     case 'Property':
     case 'ObjectProperty':
-      return getMemberName(parent['key'], Boolean(parent['computed']));
+      return getMethodName(parent['key'], Boolean(parent['computed']));
     default:
       return '<anonymous>';
   }

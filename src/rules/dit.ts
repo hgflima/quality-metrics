@@ -36,47 +36,11 @@
  *     silently skips that node.
  */
 
-import { getProjectSingleton } from '../project-singleton.js';
+import { createDeepClassVisitor } from '../utils/ts-morph-rule.js';
 import type { DitOptions, RuleContext } from '../types.js';
-import type {
-  ClassDeclaration as TsMorphClassDeclaration,
-  Project,
-} from 'ts-morph';
+import type { ClassDeclaration as TsMorphClassDeclaration } from 'ts-morph';
 
 const DEFAULT_MAX = 5;
-
-interface AstNode {
-  type: string;
-  [key: string]: unknown;
-}
-
-interface ClassLikeNode extends AstNode {
-  type: 'ClassDeclaration' | 'ClassExpression';
-}
-
-function isAstNode(value: unknown): value is AstNode {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { type?: unknown }).type === 'string'
-  );
-}
-
-function getClassName(node: ClassLikeNode): string | null {
-  const id = node['id'];
-  if (isAstNode(id) && typeof id['name'] === 'string') return id['name'];
-  return null;
-}
-
-function findTsMorphClass(
-  project: Project,
-  filePath: string,
-  className: string,
-): TsMorphClassDeclaration | null {
-  const sf = project.getSourceFile(filePath);
-  if (!sf) return null;
-  return sf.getClass(className) ?? null;
-}
 
 interface DitResult {
   dit: number;
@@ -136,68 +100,32 @@ export const dit = {
   },
   create(context: RuleContext) {
     const userOptions = context.options[0];
-    const merged: Partial<DitOptions> =
+    const options: DitOptions =
       userOptions != null && typeof userOptions === 'object'
-        ? (userOptions as Partial<DitOptions>)
-        : {};
-    const options: DitOptions = {
-      max: typeof merged.max === 'number' ? merged.max : DEFAULT_MAX,
-      tsconfigPath: merged.tsconfigPath,
-    };
+        ? { max: DEFAULT_MAX, ...(userOptions as Partial<DitOptions>) }
+        : { max: DEFAULT_MAX };
 
-    const singleton = getProjectSingleton(options.tsconfigPath);
-    if (!singleton.isAvailable) {
-      return {
-        ClassDeclaration: () => {},
-        ClassExpression: () => {},
-      };
-    }
+    return createDeepClassVisitor(
+      context,
+      options.tsconfigPath,
+      ({ classNode, className, tsmClass }) => {
+        const { dit: depth, chain } = computeDit(tsmClass);
+        if (depth <= options.max) return;
 
-    const project = singleton.project;
-    // ESLint v9+ exposes `context.filename` (property); legacy v8 exposes
-    // `getFilename()`. OXLint matches the v9+ shape. Read both so this rule
-    // works under any host runtime — see RuleContext in src/types.ts.
-    const filename = context.filename ?? context.getFilename?.() ?? '';
-    if (!filename) {
-      return {
-        ClassDeclaration: () => {},
-        ClassExpression: () => {},
-      };
-    }
+        const chainStr = chain.join(' → ');
 
-    const check = (node: unknown): void => {
-      if (!isAstNode(node)) return;
-      if (node.type !== 'ClassDeclaration' && node.type !== 'ClassExpression')
-        return;
-
-      const classNode = node as ClassLikeNode;
-      const className = getClassName(classNode);
-      if (!className) return;
-
-      const tsmClass = findTsMorphClass(project, filename, className);
-      if (!tsmClass) return;
-
-      const { dit: depth, chain } = computeDit(tsmClass);
-      if (depth <= options.max) return;
-
-      const chainStr = chain.join(' → ');
-
-      context.report({
-        node: classNode,
-        message: `Class '${className}' has DIT of ${depth} (max: ${options.max}).\n  Chain: ${chainStr}`,
-        data: {
-          className,
-          dit: depth,
-          max: options.max,
-          chain: chainStr,
-        },
-      });
-    };
-
-    return {
-      ClassDeclaration: check,
-      ClassExpression: check,
-    };
+        context.report({
+          node: classNode,
+          message: `Class '${className}' has DIT of ${depth} (max: ${options.max}).\n  Chain: ${chainStr}`,
+          data: {
+            className,
+            dit: depth,
+            max: options.max,
+            chain: chainStr,
+          },
+        });
+      },
+    );
   },
 };
 
