@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+*.log
+.env
+.env.local
+.vitest-cache/
+
+# Ralph runtime state
+.ralph_stuck_tracker
+ralph.log

@@ -1,0 +1,60 @@
+{
+  "name": "quality-metrics",
+  "version": "0.0.0",
+  "description": "OXLint/ESLint plugin for empirically-backed code quality metrics (WMC, Halstead, LCOM, CBO, DIT)",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "configs",
+    "fixtures",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "bench": "vitest bench"
+  },
+  "keywords": [
+    "oxlint",
+    "eslint",
+    "eslint-plugin",
+    "oxlint-plugin",
+    "code-quality",
+    "metrics",
+    "wmc",
+    "halstead",
+    "lcom",
+    "cbo",
+    "dit"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^2.0.0"
+  },
+  "peerDependencies": {
+    "ts-morph": ">=23.0.0"
+  },
+  "peerDependenciesMeta": {
+    "ts-morph": {
+      "optional": true
+    }
+  }
+}
