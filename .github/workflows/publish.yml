@@ -23,6 +23,12 @@ jobs:
     name: Build, test and publish to npm
     runs-on: ubuntu-latest
     environment: npm-publish
+    env:
+      # Perf gate is enforced on every push/PR via ci.yml; skip it here so
+      # noisy shared-runner timings don't block a release. Applied at job
+      # scope so it covers both the explicit Test step and the test run
+      # triggered by `prepublishOnly` inside `npm publish`.
+      QM_SKIP_PERF_GATE: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,11 +50,6 @@ jobs:
         run: npm run build
 
       - name: Test
-        env:
-          # Perf gate is enforced on every push/PR via ci.yml; skip it here so
-          # noisy shared-runner timings don't block a release that already
-          # passed perf checks upstream.
-          QM_SKIP_PERF_GATE: '1'
         run: npm test
 
       - name: Verify package version matches release tag
