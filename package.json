@@ -1,6 +1,6 @@
 {
   "name": "quality-metrics",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "OXLint/ESLint plugin for empirically-backed code quality metrics (WMC, Halstead, LCOM, CBO, DIT)",
   "keywords": [
     "cbo",
@@ -15,7 +15,16 @@
     "oxlint-plugin",
     "wmc"
   ],
+  "homepage": "https://github.com/hgflima/quality-metrics#readme",
+  "bugs": {
+    "url": "https://github.com/hgflima/quality-metrics/issues"
+  },
   "license": "MIT",
+  "author": "hgflima <hgflima@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hgflima/quality-metrics.git"
+  },
   "files": [
     "dist",
     "configs",
@@ -48,6 +57,7 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "prepare": "simple-git-hooks",
+    "prepublishOnly": "npm run build && npm run test && npm run lint",
     "bench": "vitest bench"
   },
   "devDependencies": {
