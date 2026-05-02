@@ -1,6 +1,6 @@
 {
   "name": "quality-metrics",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OXLint/ESLint plugin for empirically-backed code quality metrics (WMC, Halstead, LCOM, CBO, DIT)",
   "keywords": [
     "cbo",
