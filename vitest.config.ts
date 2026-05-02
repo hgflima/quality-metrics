@@ -9,5 +9,15 @@ export default defineConfig({
     },
     environment: 'node',
     passWithNoTests: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json'],
+      include: ['src/**/*.ts'],
+      exclude: ['src/**/*.d.ts'],
+      reportsDirectory: 'coverage',
+      thresholds: {
+        lines: 80,
+      },
+    },
   },
 });

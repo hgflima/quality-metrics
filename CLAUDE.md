@@ -14,9 +14,10 @@ OXLint/ESLint plugin enforcing five empirically-backed OO quality metrics — **
 - **Language:** TypeScript 5.3 (strict, ESM-first, ships dual ESM/CJS via `tsup` shims)
 - **Runtime:** Node >= 18
 - **Bundler:** `tsup` → `dist/` (entry: `src/index.ts`)
-- **Tests:** `vitest` — unit config (`vitest.config.ts`) + separate e2e config (`vitest.e2e.config.ts`) for the OXLint CLI integration suite
+- **Tests:** `vitest` — unit config (`vitest.config.ts`) + separate e2e config (`vitest.e2e.config.ts`) for the OXLint CLI integration suite. Coverage via `@vitest/coverage-v8`, gated at lines ≥ 80%.
 - **Self-lint / format:** `oxlint` + `oxfmt` (the plugin lints itself by loading its own compiled bundle)
 - **Deep-tier dep:** `ts-morph` is an **optional peer dependency** (`>=23.0.0`). Fast-tier rules never import it; deep-tier rules silently no-op when it's missing.
+- **Report tooling:** `tsx` runs `scripts/report/` to emit `report/index.html` + `report/metrics.json` from the same pure metric helpers the rules use.
 
 ## Project Structure
 
@@ -26,7 +27,7 @@ src/
 ├── project-singleton.ts  — Cached ts-morph Project per (tsconfig, process); Proxy stub when unavailable
 ├── types.ts              — Public contracts (RuleContext, options, metrics, ProjectSingleton)
 ├── rules/                — Five rules: wmc, halstead, lcom (fast) · cbo, dit (deep)
-└── utils/                — Shared AST helpers: ast-shared, cc, halstead, this-access, ts-morph-rule
+└── utils/                — AST helpers (ast-shared, cc, halstead, this-access, ts-morph-rule) + pure metric helpers extracted from each rule (cbo-graph, dit-chain, lcom-aggregate, wmc-aggregate)
 
 tests/
 ├── rules/                — Per-rule unit tests
@@ -38,6 +39,8 @@ tests/
 configs/                  — Published presets (`oxlint.fast.json`, `oxlint.deep.json`)
 fixtures/                 — Consumer-facing examples (`claude-settings.example.json`, `post-edit.example.sh`, `lintstagedrc.example.js`)
 specs/                    — Design specs and architecture notes
+scripts/report/           — CLI metric report (`tsx`-run); consumes the pure helpers in `src/utils/`
+report/                   — Generated artifacts (`index.html`, `metrics.json`) from `npm run report`
 .claude/hooks/post-edit.sh — Rebuilds dist + runs fast tier on edited `src/*.ts(x)`
 ```
 
@@ -49,6 +52,7 @@ The fast/deep tier split is **load-bearing** — see Key Conventions.
 npm install
 npm run build               # tsup → dist/ (required before lint, e2e, or oxlint runs)
 npm run test                # vitest unit suite
+npm run test:coverage       # vitest with v8 coverage (gates lines >= 80%)
 npm run test:e2e            # builds, then runs oxlint CLI integration tests
 npm run test:watch
 npm run typecheck           # tsc --noEmit
@@ -59,6 +63,7 @@ npm run lint:fix            # build + oxlint --fix (fast tier only)
 npm run fmt                 # oxfmt
 npm run fmt:check
 npm run bench               # vitest bench
+npm run report              # tsx scripts/report — emits report/index.html + report/metrics.json
 ```
 
 Pre-commit (via `simple-git-hooks` + `lint-staged`) runs `npm run build && npx lint-staged`, which fmt-checks and lints staged files through both tiers.
@@ -77,5 +82,6 @@ For any library, framework, SDK, API, CLI tool, or cloud service — including E
 - **Read filename via the v8/v9 fallback.** `context.filename ?? context.getFilename?.() ?? ''` (helper `getFilename` in `ts-morph-rule.ts`). OXLint and ESLint v9 expose `filename`; legacy ESLint v8 only exposes `getFilename()`.
 - **Diagnostic `data` payload is part of the public contract.** Every report carries a structured `data` field (shapes documented in README.md "Diagnostic data payload"). Adding/renaming fields is a breaking change for downstream formatters and dashboards. The OXLint JSON formatter does not serialize `data` by design — keep `message` self-describing and stable.
 - **No `any`.** `oxlint.fast.json` enforces `typescript/no-explicit-any: error` on this repo. Use precise types or `unknown` + narrowing.
-- **`ignorePatterns` excludes `tests/`, `fixtures/`, `specs/`, `configs/`** from self-lint. Don't relax this without intent — fixtures contain deliberately-bad code used to drive tests.
+- **`ignorePatterns` excludes `tests/`, `fixtures/`, `specs/`, `configs/`, `report/`, `scripts/`** from self-lint. Don't relax this without intent — fixtures contain deliberately-bad code used to drive tests, and `report/` holds generated artifacts.
+- **Pure metric helpers stay pure.** `utils/cbo-graph.ts`, `utils/dit-chain.ts`, `utils/lcom-aggregate.ts`, `utils/wmc-aggregate.ts` answer "what is the metric for this class?" with no rule-context coupling. Rules own option parsing, thresholds, and `context.report`; helpers are reused by `scripts/report/` to generate batch reports. Don't import `RuleContext` or call `context.report` from a helper — that breaks the report path.
 - **E2E tests live under a separate vitest config** (`vitest.e2e.config.ts`, 30s timeouts, forks pool). They require `dist/` to be fresh — `npm run test:e2e` always builds first; if you invoke `vitest run --config vitest.e2e.config.ts` directly, build manually beforehand.

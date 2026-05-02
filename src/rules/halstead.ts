@@ -42,7 +42,7 @@ const DEFAULT_MAX_EFFORT = 400;
  *    - `MethodDefinition` / `PropertyDefinition` / `Property` / `ObjectProperty`
  * 3. `<anonymous>` as a final fallback.
  */
-function getFunctionName(node: AstNode): string {
+export function getFunctionName(node: AstNode): string {
   const ownId = node['id'];
   if (isAstNode(ownId) && ownId.type === 'Identifier' && typeof ownId['name'] === 'string') {
     return ownId['name'];

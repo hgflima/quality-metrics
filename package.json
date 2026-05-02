@@ -37,7 +37,9 @@
     "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "npm run build && vitest run --config vitest.e2e.config.ts",
+    "report": "tsx scripts/report/index.ts",
     "typecheck": "tsc --noEmit",
     "lint:fast": "oxlint --config oxlint.fast.json",
     "lint:deep": "oxlint --config oxlint.deep.json",
@@ -50,6 +52,8 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "@typescript-eslint/typescript-estree": "^8.59.1",
+    "@vitest/coverage-v8": "^2.1.9",
     "eslint": "^10.2.1",
     "lint-staged": "16.4.0",
     "oxfmt": "0.47.0",
@@ -57,6 +61,7 @@
     "simple-git-hooks": "2.13.1",
     "ts-morph": "^28.0.0",
     "tsup": "^8.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.0",
     "vitest": "^2.0.0"
   },

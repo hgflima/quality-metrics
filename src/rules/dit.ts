@@ -37,44 +37,10 @@
  */
 
 import { createDeepClassVisitor } from '../utils/ts-morph-rule.js';
+import { computeDit } from '../utils/dit-chain.js';
 import type { DitOptions, RuleContext } from '../types.js';
-import type { ClassDeclaration as TsMorphClassDeclaration } from 'ts-morph';
 
 const DEFAULT_MAX = 5;
-
-interface DitResult {
-  dit: number;
-  chain: string[];
-}
-
-/**
- * Walk the `extends` chain from `cls` to the root, returning DIT (number of
- * edges) and the named chain (class first, then ancestors). Stops on:
- * - no base class (chain ends naturally),
- * - base in a `.d.ts` file (project-local classes only),
- * - cycle (would revisit a class already in the chain).
- */
-function computeDit(cls: TsMorphClassDeclaration): DitResult {
-  const chain: string[] = [];
-  const visited = new Set<TsMorphClassDeclaration>();
-
-  let current: TsMorphClassDeclaration | undefined = cls;
-  chain.push(current.getName() ?? '<anonymous>');
-  visited.add(current);
-
-  while (true) {
-    const base: TsMorphClassDeclaration | undefined = current.getBaseClass();
-    if (!base) break;
-    if (base.getSourceFile().isDeclarationFile()) break;
-    if (visited.has(base)) break;
-
-    visited.add(base);
-    chain.push(base.getName() ?? '<anonymous>');
-    current = base;
-  }
-
-  return { dit: chain.length - 1, chain };
-}
 
 export const dit = {
   meta: {

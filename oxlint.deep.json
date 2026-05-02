@@ -13,6 +13,8 @@
     "configs/**",
     "specs/**",
     "coverage/**",
+    "report/**",
+    "scripts/**",
     "tests/**"
   ]
 }

@@ -33,28 +33,11 @@
  * (sendEmail, scheduleJob)"
  */
 
-import { extractThisAccesses, type FunctionLikeNode } from '../utils/this-access.js';
-import {
-  collectClassMethods,
-  getClassName,
-  getMethodName,
-  isClassLikeNode,
-} from '../utils/ast-shared.js';
+import { computeLcom } from '../utils/lcom-aggregate.js';
+import { getClassName, isClassLikeNode } from '../utils/ast-shared.js';
 import type { LcomOptions, RuleContext } from '../types.js';
 
 const DEFAULT_MAX_LCOM = 0;
-
-interface MethodAttrs {
-  name: string;
-  accessed: Set<string>;
-}
-
-function intersects(a: Set<string>, b: Set<string>): boolean {
-  // Iterate the smaller set for cheaper lookup.
-  const [small, big] = a.size <= b.size ? [a, b] : [b, a];
-  for (const x of small) if (big.has(x)) return true;
-  return false;
-}
 
 export const lcom = {
   meta: {
@@ -87,31 +70,7 @@ export const lcom = {
     const check = (node: unknown): void => {
       if (!isClassLikeNode(node)) return;
 
-      const methods = collectClassMethods<MethodAttrs>(node, (key, computed, value) => ({
-        name: getMethodName(key, computed),
-        accessed: extractThisAccesses(value as unknown as FunctionLikeNode),
-      }));
-      // Need at least 2 methods to form a single pair; with fewer, P=Q=0 and
-      // LCOM=0 by definition (covers the single-method fixture).
-      if (methods.length < 2) return;
-
-      let P = 0;
-      let Q = 0;
-      const unrelated: Array<readonly [string, string]> = [];
-      for (let i = 0; i < methods.length; i++) {
-        for (let j = i + 1; j < methods.length; j++) {
-          const a = methods[i]!;
-          const b = methods[j]!;
-          if (intersects(a.accessed, b.accessed)) {
-            Q++;
-          } else {
-            P++;
-            unrelated.push([a.name, b.name] as const);
-          }
-        }
-      }
-
-      const lcomValue = Math.max(P - Q, 0);
+      const { lcom: lcomValue, unrelated } = computeLcom(node);
       if (lcomValue <= options.maxLcom) return;
 
       const className = getClassName(node) ?? '<anonymous>';

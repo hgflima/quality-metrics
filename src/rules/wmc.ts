@@ -21,21 +21,11 @@
  * Methods contributing: validate(CC=8), createUser(CC=12), ..."
  */
 
-import { computeCC, type FunctionNode } from '../utils/cc.js';
-import {
-  collectClassMethods,
-  getClassName,
-  getMethodName,
-  isClassLikeNode,
-} from '../utils/ast-shared.js';
+import { computeWmc } from '../utils/wmc-aggregate.js';
+import { getClassName, isClassLikeNode } from '../utils/ast-shared.js';
 import type { RuleContext, WmcOptions } from '../types.js';
 
 const DEFAULT_MAX = 20;
-
-interface MethodInfo {
-  name: string;
-  cc: number;
-}
 
 export const wmc = {
   meta: {
@@ -68,15 +58,8 @@ export const wmc = {
     const check = (node: unknown): void => {
       if (!isClassLikeNode(node)) return;
 
-      const methods = collectClassMethods<MethodInfo>(node, (key, computed, value) => ({
-        name: getMethodName(key, computed),
-        cc: computeCC(value as unknown as FunctionNode),
-      }));
+      const { wmc: wmcValue, methods } = computeWmc(node);
       if (methods.length === 0) return;
-
-      let wmcValue = 0;
-      for (const { cc } of methods) wmcValue += cc;
-
       if (wmcValue <= options.max) return;
 
       const className = getClassName(node) ?? '<anonymous>';

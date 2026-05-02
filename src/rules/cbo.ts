@@ -44,99 +44,10 @@
  */
 
 import { createDeepClassVisitor } from '../utils/ts-morph-rule.js';
+import { collectOutgoingClasses, collectIncomingClasses } from '../utils/cbo-graph.js';
 import type { CboOptions, RuleContext } from '../types.js';
-import type {
-  ClassDeclaration as TsMorphClassDeclaration,
-  Identifier,
-  Node as TsMorphNode,
-} from 'ts-morph';
 
 const DEFAULT_MAX = 10;
-
-/**
- * Walk every member of `cls` (constructor, methods, getters, setters,
- * properties) and collect names of distinct external classes referenced from
- * within. `getMembers()` deliberately excludes heritage clauses — that is how
- * the C&K "exclude inheritance" rule is enforced for outgoing edges.
- */
-function collectOutgoingClasses(cls: TsMorphClassDeclaration): Set<string> {
-  const out = new Set<string>();
-
-  for (const member of cls.getMembers()) {
-    member.forEachDescendant((node) => {
-      if (node.getKindName() !== 'Identifier') return;
-      collectFromIdentifier(node as Identifier, cls, out);
-    });
-  }
-
-  return out;
-}
-
-function collectFromIdentifier(
-  identifier: Identifier,
-  selfClass: TsMorphClassDeclaration,
-  out: Set<string>,
-): void {
-  // `getDefinitionNodes()` follows imports and re-exports to the *actual*
-  // declaration, where `getSymbol()` would stop at the local import binding
-  // (an `ImportSpecifier`) and never reveal the underlying ClassDeclaration.
-  const definitions = identifier.getDefinitionNodes();
-  for (const decl of definitions) {
-    if (decl.getKindName() !== 'ClassDeclaration') continue;
-    if (decl === selfClass) continue;
-
-    if (decl.getSourceFile().isDeclarationFile()) continue;
-
-    const name = (decl as TsMorphClassDeclaration).getName();
-    if (name) out.add(name);
-  }
-}
-
-/**
- * Find every class (in any source file loaded into the ts-morph Project) whose
- * body references `cls`. Uses TypeScript's "Find All References" service via
- * `findReferencesAsNodes()`, then for each reference walks up the AST:
- * - if the chain crosses a `HeritageClause` → skip (inheritance excluded)
- * - else attribute the reference to the innermost containing class
- * Self-references (declaration site, references inside `cls` itself) drop out
- * via the `containingClass === cls` guard.
- */
-function collectIncomingClasses(cls: TsMorphClassDeclaration): Set<string> {
-  const out = new Set<string>();
-
-  for (const ref of cls.findReferencesAsNodes()) {
-    if (ref.getSourceFile().isDeclarationFile()) continue;
-
-    const containing = findContainingClassExcludingHeritage(ref);
-    if (!containing) continue;
-    if (containing === cls) continue;
-
-    const name = containing.getName();
-    if (name) out.add(name);
-  }
-
-  return out;
-}
-
-/**
- * Walk ancestors of `node` and return the innermost containing class, or
- * `null` if any ancestor in that chain is a `HeritageClause` (the reference
- * lives inside an `extends` / `implements` clause and must be excluded per
- * C&K). Also returns `null` if the reference is not contained in any class
- * (e.g. top-level imports, type aliases, function declarations).
- */
-function findContainingClassExcludingHeritage(node: TsMorphNode): TsMorphClassDeclaration | null {
-  let current: TsMorphNode | undefined = node.getParent();
-  while (current) {
-    const kind = current.getKindName();
-    if (kind === 'HeritageClause') return null;
-    if (kind === 'ClassDeclaration' || kind === 'ClassExpression') {
-      return current as TsMorphClassDeclaration;
-    }
-    current = current.getParent();
-  }
-  return null;
-}
 
 export const cbo = {
   meta: {

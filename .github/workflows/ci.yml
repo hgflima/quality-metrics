@@ -53,7 +53,26 @@ jobs:
         run: npm run lint:deep
 
       - name: Test
+        if: matrix.node != '20'
         run: npm test
+
+      - name: Test (with coverage — gates lines >= 80%)
+        if: matrix.node == '20'
+        run: npm run test:coverage
+
+      - name: Generate quality report
+        if: matrix.node == '20'
+        run: npm run report
+
+      - name: Upload quality report
+        if: matrix.node == '20'
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-report
+          path: |
+            report/
+            coverage/coverage-final.json
+          retention-days: 14
 
       - name: E2E (real oxlint CLI × plugin integration)
         # Spawns the actual oxlint binary against fixtures to validate
