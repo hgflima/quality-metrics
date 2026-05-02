@@ -1,7 +1,7 @@
 node_modules/
 dist/
 coverage/
-report/
+/report/
 .DS_Store
 *.log
 .env
