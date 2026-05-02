@@ -23,7 +23,7 @@
   "author": "hgflima <hgflima@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hgflima/quality-metrics.git"
+    "url": "https://github.com/hgflima/quality-metrics"
   },
   "files": [
     "dist",
