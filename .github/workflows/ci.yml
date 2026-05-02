@@ -74,6 +74,18 @@ jobs:
             coverage/coverage-final.json
           retention-days: 14
 
+      - name: Debug — oxlint manual run (stderr visible)
+        if: matrix.node == '18'
+        continue-on-error: true
+        run: |
+          echo "--- oxlint version ---"
+          ./node_modules/.bin/oxlint --version
+          echo "--- linux binary present? ---"
+          ls node_modules/@oxlint/ 2>/dev/null || echo "no @oxlint scope"
+          ls node_modules/.bin/ | grep oxlint || true
+          echo "--- manual fast-tier run on high-wmc.ts ---"
+          ./node_modules/.bin/oxlint --config tests/integration/oxlint-cli/oxlint.fast.test.json -f json tests/fixtures/wmc/high-wmc.ts 2>&1 | head -100 || true
+
       - name: E2E (real oxlint CLI × plugin integration)
         # Spawns the actual oxlint binary against fixtures to validate
         # that the published plugin loads and all 5 rules fire end-to-end.
