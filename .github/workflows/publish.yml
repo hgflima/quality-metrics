@@ -27,7 +27,7 @@ jobs:
       # Perf gate is enforced on every push/PR via ci.yml; skip it here so
       # noisy shared-runner timings don't block a release. Applied at job
       # scope so it covers both the explicit Test step and the test run
-      # triggered by `prepublishOnly` inside `npm publish`.
+      # triggered by the prepublishOnly hook during the publish step.
       QM_SKIP_PERF_GATE: '1'
     steps:
       - name: Checkout
