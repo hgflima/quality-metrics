@@ -102,8 +102,10 @@ describe('.github/workflows/publish.yml — npm publish command', () => {
     expect(loadWorkflow()).toMatch(/npm publish[^\n]*--access public/);
   });
 
-  it('reads the auth token from the NPM_TOKEN secret', () => {
-    expect(loadWorkflow()).toMatch(/NODE_AUTH_TOKEN:\s*\$\{\{\s*secrets\.NPM_TOKEN\s*\}\}/);
+  it('authenticates via npm Trusted Publisher (OIDC) — no NPM_TOKEN secret', () => {
+    const wf = loadWorkflow();
+    expect(wf).not.toMatch(/NODE_AUTH_TOKEN/);
+    expect(wf).not.toMatch(/secrets\.NPM_TOKEN/);
   });
 
   it('configures the npm registry URL on setup-node (required for OIDC + auth)', () => {

@@ -44,6 +44,11 @@ jobs:
         run: npm run build
 
       - name: Test
+        env:
+          # Perf gate is enforced on every push/PR via ci.yml; skip it here so
+          # noisy shared-runner timings don't block a release that already
+          # passed perf checks upstream.
+          QM_SKIP_PERF_GATE: '1'
         run: npm test
 
       - name: Verify package version matches release tag
