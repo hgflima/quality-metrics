@@ -91,24 +91,21 @@ describe('computeDit', () => {
   });
 
   it('uses the <anonymous> fallback for an anonymous base class', () => {
-    // `class Foo extends class {} {}` — the base is a nameless class expression.
-    // ts-morph's getBaseClass() walks through it; the chain entry falls back
-    // to '<anonymous>' (line 32).
-    project.createSourceFile('Foo.ts', 'export class Foo extends class {} {}');
+    // `export default class { ... }` produces a ClassDeclaration without a name.
+    // Default-importing it as `X` and extending `X` resolves the base via
+    // getBaseClass to the anonymous declaration; line 32's `?? '<anonymous>'`
+    // fallback fires.
+    project.createSourceFile('Anon.ts', 'export default class { greet() {} }');
+    project.createSourceFile(
+      'Foo.ts',
+      `import X from './Anon';
+       export class Foo extends X {}`,
+    );
 
-    const result = computeDit(getClass('Foo.ts', 'Foo'));
-    expect(result.chain[0]).toBe('Foo');
-    // Base may or may not be resolved depending on ts-morph's handling of
-    // inline class expressions; if it is, the second entry must be the
-    // anonymous fallback. If not (getBaseClass returns undefined), the chain
-    // stops at the leaf. Both outcomes exercise a different defensive branch
-    // and neither should crash.
-    if (result.chain.length === 2) {
-      expect(result.chain[1]).toBe('<anonymous>');
-      expect(result.dit).toBe(1);
-    } else {
-      expect(result).toEqual({ dit: 0, chain: ['Foo'] });
-    }
+    expect(computeDit(getClass('Foo.ts', 'Foo'))).toEqual({
+      dit: 1,
+      chain: ['Foo', '<anonymous>'],
+    });
   });
 
   it('stops when extends does not resolve to a class declaration', () => {
