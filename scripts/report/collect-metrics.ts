@@ -22,7 +22,7 @@ import { getProjectSingleton } from '../../src/project-singleton.js';
 import { findTsMorphClass } from '../../src/utils/ts-morph-rule.js';
 import { collectOutgoingClasses, collectIncomingClasses } from '../../src/utils/cbo-graph.js';
 import { computeDit } from '../../src/utils/dit-chain.js';
-import { getFunctionName } from '../../src/rules/halstead.js';
+import { getFunctionName } from '../../src/utils/ast-shared.js';
 
 import type { ClassEntity, FunctionEntity, FileReport } from './types.js';
 

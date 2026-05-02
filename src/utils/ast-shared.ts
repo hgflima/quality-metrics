@@ -103,3 +103,58 @@ export function collectClassMethods<T>(
   }
   return result;
 }
+
+/**
+ * Resolve a human-readable name for a function-like node.
+ *
+ * Preference order:
+ *
+ * 1. The function's own `id` (named FunctionDeclaration / FunctionExpression).
+ * 2. The enclosing binding context exposed via `node.parent` (set by the ESLint / OXLint traversal):
+ *
+ *    - `VariableDeclarator` with an `Identifier` id
+ *    - `AssignmentExpression` to an `Identifier` or `MemberExpression`
+ *    - `MethodDefinition` / `PropertyDefinition` / `Property` / `ObjectProperty`
+ * 3. `<anonymous>` as a final fallback.
+ */
+export function getFunctionName(node: AstNode): string {
+  const ownId = node['id'];
+  if (isAstNode(ownId) && ownId.type === 'Identifier' && typeof ownId['name'] === 'string') {
+    return ownId['name'];
+  }
+
+  const parent = node['parent'];
+  if (!isAstNode(parent)) return '<anonymous>';
+
+  switch (parent.type) {
+    case 'VariableDeclarator': {
+      const idNode = parent['id'];
+      if (isAstNode(idNode) && idNode.type === 'Identifier' && typeof idNode['name'] === 'string') {
+        return idNode['name'];
+      }
+      return '<anonymous>';
+    }
+    case 'AssignmentExpression': {
+      const left = parent['left'];
+      if (isAstNode(left)) {
+        if (left.type === 'Identifier' && typeof left['name'] === 'string') {
+          return left['name'];
+        }
+        if (left.type === 'MemberExpression') {
+          const prop = left['property'];
+          if (isAstNode(prop) && prop.type === 'Identifier' && typeof prop['name'] === 'string') {
+            return prop['name'];
+          }
+        }
+      }
+      return '<anonymous>';
+    }
+    case 'MethodDefinition':
+    case 'PropertyDefinition':
+    case 'Property':
+    case 'ObjectProperty':
+      return getMethodName(parent['key'], Boolean(parent['computed']));
+    default:
+      return '<anonymous>';
+  }
+}
