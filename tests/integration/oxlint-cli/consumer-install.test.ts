@@ -41,6 +41,24 @@ beforeAll(async () => {
     { cwd: consumerDir, env: { ...process.env, npm_config_loglevel: 'error' } },
   );
 
+  // npm/cli#4828 — on Linux x64, npm sometimes skips the platform-specific
+  // optional native binding for oxlint. Force-install it so the consumer's
+  // CLI can load. No-op on other platforms.
+  if (process.platform === 'linux' && process.arch === 'x64') {
+    await exec(
+      'npm',
+      [
+        'install',
+        '--no-audit',
+        '--no-fund',
+        '--no-save',
+        '--silent',
+        '@oxlint/binding-linux-x64-gnu@1.62.0',
+      ],
+      { cwd: consumerDir, env: { ...process.env, npm_config_loglevel: 'error' } },
+    );
+  }
+
   // 4. Drop a violating fixture and a config that resolves the plugin BY PACKAGE NAME
   //    (mirrors the published presets in configs/oxlint.fast.json).
   writeFileSync(
